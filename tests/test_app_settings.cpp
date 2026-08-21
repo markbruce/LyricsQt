@@ -32,6 +32,9 @@ private slots:
         QVERIFY(fresh.lyricsSmartFilterEnabled());
         QVERIFY(!fresh.lyricsFilterKeys().isEmpty());
         QVERIFY(fresh.preferBilingualLyrics());
+        QCOMPARE(fresh.autostartEnabled(), false);
+        QCOMPARE(fresh.quitWithPlayer(), false);
+        QCOMPARE(fresh.strictSearchEnabled(), false);
     }
 
     void roundtrip_offset()

@@ -68,6 +68,17 @@ public:
     bool preferBilingualLyrics() const;
     void setPreferBilingualLyrics(bool enabled);
 
+    /// XDG autostart toggle (install/copy handled in Task 14).
+    bool autostartEnabled() const;
+    void setAutostartEnabled(bool enabled);
+
+    /// Quit app when preferred/active MPRIS player leaves the bus.
+    bool quitWithPlayer() const;
+    void setQuitWithPlayer(bool enabled);
+
+    bool strictSearchEnabled() const;
+    void setStrictSearchEnabled(bool enabled);
+
 signals:
     void changed(const QString &key);
 

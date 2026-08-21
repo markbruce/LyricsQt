@@ -16,6 +16,7 @@
 
 #include "ui/DesktopLyricsWindow.h"
 #include "ui/LyricsHudWindow.h"
+#include "ui/PreferencesDialog.h"
 #include "ui/SearchLyricsDialog.h"
 #include "ui/TrayController.h"
 
@@ -97,12 +98,19 @@ int main(int argc, char *argv[])
     LyricsHudWindow hudWindow(&session, &player, &store, &providers, &settings);
     TrayController tray(&settings, &session);
     SearchLyricsDialog searchDialog(&player, &session, &store, &providers, &settings);
+    PreferencesDialog preferencesDialog(&settings);
 
     const auto openSearchDialog = [&searchDialog]() {
         searchDialog.reloadFromCurrentTrack();
         searchDialog.show();
         searchDialog.raise();
         searchDialog.activateWindow();
+    };
+
+    const auto openPreferences = [&preferencesDialog]() {
+        preferencesDialog.show();
+        preferencesDialog.raise();
+        preferencesDialog.activateWindow();
     };
 
     const auto markWrongLyrics = [&]() {
@@ -125,9 +133,7 @@ int main(int argc, char *argv[])
         hudWindow.raise();
         hudWindow.activateWindow();
     });
-    QObject::connect(&tray, &TrayController::preferencesRequested, &app, []() {
-        qDebug().noquote() << QStringLiteral("[Tray] Preferences (stub)");
-    });
+    QObject::connect(&tray, &TrayController::preferencesRequested, &app, openPreferences);
     QObject::connect(&tray, &TrayController::searchLyricsRequested, &app, openSearchDialog);
     QObject::connect(&tray, &TrayController::wrongLyricsRequested, &app, markWrongLyrics);
     QObject::connect(&hudWindow, &LyricsHudWindow::searchLyricsRequested, &app, openSearchDialog);

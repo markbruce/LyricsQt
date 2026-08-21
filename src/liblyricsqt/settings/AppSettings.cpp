@@ -25,6 +25,9 @@ constexpr auto kLyricsFilterEnabled = "LyricsFilterEnabled";
 constexpr auto kLyricsSmartFilterEnabled = "LyricsSmartFilterEnabled";
 constexpr auto kLyricsFilterKeys = "LyricsFilterKeys";
 constexpr auto kPreferBilingualLyrics = "PreferBilingualLyrics";
+constexpr auto kAutostartEnabled = "AutostartEnabled";
+constexpr auto kQuitWithPlayer = "QuitWithPlayer";
+constexpr auto kStrictSearchEnabled = "StrictSearchEnabled";
 
 double clampFactor(double factor)
 {
@@ -319,6 +322,48 @@ void AppSettings::setPreferBilingualLyrics(bool enabled)
     }
     m_settings.setValue(QLatin1String(kPreferBilingualLyrics), enabled);
     emit changed(QLatin1String(kPreferBilingualLyrics));
+}
+
+bool AppSettings::autostartEnabled() const
+{
+    return m_settings.value(QLatin1String(kAutostartEnabled), false).toBool();
+}
+
+void AppSettings::setAutostartEnabled(bool enabled)
+{
+    if (autostartEnabled() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kAutostartEnabled), enabled);
+    emit changed(QLatin1String(kAutostartEnabled));
+}
+
+bool AppSettings::quitWithPlayer() const
+{
+    return m_settings.value(QLatin1String(kQuitWithPlayer), false).toBool();
+}
+
+void AppSettings::setQuitWithPlayer(bool enabled)
+{
+    if (quitWithPlayer() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kQuitWithPlayer), enabled);
+    emit changed(QLatin1String(kQuitWithPlayer));
+}
+
+bool AppSettings::strictSearchEnabled() const
+{
+    return m_settings.value(QLatin1String(kStrictSearchEnabled), false).toBool();
+}
+
+void AppSettings::setStrictSearchEnabled(bool enabled)
+{
+    if (strictSearchEnabled() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kStrictSearchEnabled), enabled);
+    emit changed(QLatin1String(kStrictSearchEnabled));
 }
 
 } // namespace lyricsqt
