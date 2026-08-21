@@ -28,6 +28,12 @@ public:
     int globalOffsetMs() const;
     void setGlobalOffsetMs(int offsetMs);
 
+    bool loadLyricsBesideTrack() const;
+    void setLoadLyricsBesideTrack(bool enabled);
+
+    QString lyricsSavingPath() const;
+    void setLyricsSavingPath(const QString &path);
+
 signals:
     void changed(const QString &key);
 

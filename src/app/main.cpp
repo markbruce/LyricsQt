@@ -3,6 +3,9 @@
 #include <QLabel>
 
 #include <lyricsqt/AppSettings.h>
+#include <lyricsqt/LyricsController.h>
+#include <lyricsqt/LyricsSession.h>
+#include <lyricsqt/LyricsStore.h>
 #include <lyricsqt/PlayerService.h>
 #include <lyricsqt/Version.h>
 
@@ -14,6 +17,9 @@ int main(int argc, char *argv[])
 
     lyricsqt::AppSettings settings;
     lyricsqt::PlayerService player(&settings);
+    lyricsqt::LyricsSession session;
+    lyricsqt::LyricsStore store(&settings);
+    lyricsqt::LyricsController controller(&player, &session, &store);
 
     QObject::connect(&player, &lyricsqt::PlayerService::trackChanged,
                      &app, [&player](const lyricsqt::TrackInfo &track) {
@@ -31,19 +37,35 @@ int main(int argc, char *argv[])
                                     .arg(playing)
                                     .arg(track.title, track.artist);
                      });
+    QObject::connect(&session, &lyricsqt::LyricsSession::currentLineChanged,
+                     &app, [&session](int index) {
+                         const auto *lyrics = session.lyrics();
+                         if (!lyrics || index < 0 || index >= lyrics->lines.size()) {
+                             qDebug().noquote() << QStringLiteral("[Lyrics] line=-1");
+                             return;
+                         }
+                         qDebug().noquote()
+                             << QStringLiteral("[Lyrics] line=%1 text=%2")
+                                    .arg(index)
+                                    .arg(lyrics->lines.at(index).content);
+                     });
 
-    // Emit current state once at startup for easier manual verification.
     {
         const auto track = player.currentTrack();
         qDebug().noquote()
             << QStringLiteral("[MPRIS] initial player=%1 title=%2 artist=%3 playing=%4")
                    .arg(player.activePlayerId(), track.title, track.artist)
                    .arg(player.isPlaying());
+        qDebug().noquote()
+            << QStringLiteral("[LyricsStore] savingPath=%1 besideTrack=%2")
+                   .arg(settings.lyricsSavingPath())
+                   .arg(settings.loadLyricsBesideTrack());
     }
 
     QLabel label(QStringLiteral("LyricsQt %1").arg(QLatin1String(lyricsqt::version())));
     label.resize(320, 80);
     label.show();
 
+    Q_UNUSED(controller);
     return app.exec();
 }

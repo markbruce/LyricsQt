@@ -1,5 +1,7 @@
 #include <lyricsqt/AppSettings.h>
 
+#include <QStandardPaths>
+
 namespace lyricsqt {
 
 namespace {
@@ -9,6 +11,8 @@ constexpr auto kMenuBarLyricsEnabled = "MenuBarLyricsEnabled";
 constexpr auto kExportEnabled = "ExportEnabled";
 constexpr auto kPreferredPlayerId = "PreferredPlayerId";
 constexpr auto kGlobalOffsetMs = "GlobalLyricsOffset";
+constexpr auto kLoadLyricsBesideTrack = "LoadLyricsBesideTrack";
+constexpr auto kLyricsSavingPath = "LyricsSavingPath";
 
 } // namespace
 
@@ -91,6 +95,39 @@ void AppSettings::setGlobalOffsetMs(int offsetMs)
     }
     m_settings.setValue(QLatin1String(kGlobalOffsetMs), offsetMs);
     emit changed(QLatin1String(kGlobalOffsetMs));
+}
+
+bool AppSettings::loadLyricsBesideTrack() const
+{
+    return m_settings.value(QLatin1String(kLoadLyricsBesideTrack), true).toBool();
+}
+
+void AppSettings::setLoadLyricsBesideTrack(bool enabled)
+{
+    if (loadLyricsBesideTrack() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kLoadLyricsBesideTrack), enabled);
+    emit changed(QLatin1String(kLoadLyricsBesideTrack));
+}
+
+QString AppSettings::lyricsSavingPath() const
+{
+    const QString custom = m_settings.value(QLatin1String(kLyricsSavingPath)).toString();
+    if (!custom.isEmpty()) {
+        return custom;
+    }
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)
+        + QStringLiteral("/lyrics");
+}
+
+void AppSettings::setLyricsSavingPath(const QString &path)
+{
+    if (m_settings.value(QLatin1String(kLyricsSavingPath)).toString() == path) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kLyricsSavingPath), path);
+    emit changed(QLatin1String(kLyricsSavingPath));
 }
 
 } // namespace lyricsqt

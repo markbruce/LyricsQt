@@ -19,6 +19,8 @@ private slots:
         QCOMPARE(fresh.exportEnabled(), false);
         QCOMPARE(fresh.preferredPlayerId(), QString());
         QCOMPARE(fresh.globalOffsetMs(), 0);
+        QVERIFY(fresh.loadLyricsBesideTrack());
+        QVERIFY(!fresh.lyricsSavingPath().isEmpty());
     }
 
     void roundtrip_offset()
