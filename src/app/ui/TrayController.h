@@ -32,6 +32,7 @@ private:
     void onSettingsChanged(const QString &key);
     void updateTooltip();
     void toggleDesktopLyrics();
+    void toggleTrayLine();
     void adjustOffset(int deltaMs);
 
     lyricsqt::AppSettings *m_settings = nullptr;
@@ -39,4 +40,5 @@ private:
     QSystemTrayIcon *m_tray = nullptr;
     QMenu *m_menu = nullptr;
     QAction *m_toggleDesktopAction = nullptr;
+    QAction *m_toggleTrayLineAction = nullptr;
 };

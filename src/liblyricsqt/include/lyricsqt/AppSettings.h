@@ -68,7 +68,7 @@ public:
     bool preferBilingualLyrics() const;
     void setPreferBilingualLyrics(bool enabled);
 
-    /// XDG autostart toggle (install/copy handled in Task 14).
+    /// XDG autostart toggle; app syncs ~/.config/autostart via AutostartHelper.
     bool autostartEnabled() const;
     void setAutostartEnabled(bool enabled);
 

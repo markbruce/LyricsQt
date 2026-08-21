@@ -17,6 +17,12 @@ Status: scaffolding in progress. Docs and Task 1 CMake skeleton are in tree.
 - Desktop overlay + tray + panel export
 - GNOME and KDE on Wayland as primary targets
 
+## Controls (v1)
+
+Global hotkeys are deferred. Use the system tray context menu for primary controls: toggle desktop lyrics, toggle tray line, show HUD, offset ±, search, wrong lyrics, preferences, and quit.
+
+Optional: Preferences → Launch at login (XDG autostart) and Quit when preferred/active player exits.
+
 ## Build (after scaffold lands)
 
 ```bash

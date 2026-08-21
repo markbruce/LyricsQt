@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=LyricsQt
+GenericName=Lyrics
+Comment=Desktop lyrics synchronized with your music player
+Exec=@LYRICSQT_EXEC@
+Icon=lyricsqt
+Terminal=false
+Categories=AudioVideo;Audio;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

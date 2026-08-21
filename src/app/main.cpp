@@ -14,6 +14,7 @@
 #include <lyricsqt/QQMusicProvider.h>
 #include <lyricsqt/Version.h>
 
+#include "AutostartHelper.h"
 #include "ui/DesktopLyricsWindow.h"
 #include "ui/LyricsHudWindow.h"
 #include "ui/PreferencesDialog.h"
@@ -29,6 +30,8 @@ int main(int argc, char *argv[])
     QApplication::setQuitOnLastWindowClosed(false);
 
     lyricsqt::AppSettings settings;
+    lyricsqt::AutostartHelper::syncFromSettings(settings.autostartEnabled());
+
     lyricsqt::PlayerService player(&settings);
     lyricsqt::LyricsSession session;
     lyricsqt::LyricsStore store(&settings);
@@ -47,6 +50,8 @@ int main(int argc, char *argv[])
                              session.setExtraOffsetMs(settings.globalOffsetMs());
                          } else if (key == QLatin1String("EnabledProviderIds")) {
                              providers.setEnabledProviderIds(settings.enabledProviderIds());
+                         } else if (key == QLatin1String("AutostartEnabled")) {
+                             lyricsqt::AutostartHelper::syncFromSettings(settings.autostartEnabled());
                          }
                      });
 

@@ -4,6 +4,7 @@
 
 #include <lyricsqt/AppSettings.h>
 
+#include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -260,11 +261,23 @@ void PlayerService::updatePollingTimer()
 
 void PlayerService::onNameOwnerChanged(const QString &name, const QString &oldOwner, const QString &newOwner)
 {
-    Q_UNUSED(oldOwner);
-    Q_UNUSED(newOwner);
     if (!name.startsWith(QLatin1String(kMprisPrefix))) {
         return;
     }
+
+    // Quit when designated (preferred) or currently active player leaves the bus.
+    if (m_settings && m_settings->quitWithPlayer()
+        && !oldOwner.isEmpty() && newOwner.isEmpty()) {
+        const bool designatedLeft = !m_preferredPlayerId.isEmpty()
+            && matchesPreferred(name, m_preferredPlayerId);
+        const bool activeLeft = m_preferredPlayerId.isEmpty()
+            && name == m_backend->serviceName();
+        if (designatedLeft || activeLeft) {
+            QCoreApplication::quit();
+            return;
+        }
+    }
+
     selectAndConnectPlayer();
 }
 

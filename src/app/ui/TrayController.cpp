@@ -25,13 +25,19 @@ TrayController::TrayController(lyricsqt::AppSettings *settings,
     m_tray->setToolTip(QStringLiteral("LyricsQt"));
 
     m_menu = new QMenu;
-    auto *showHud = m_menu->addAction(QStringLiteral("Show HUD"));
-    connect(showHud, &QAction::triggered, this, &TrayController::showHudRequested);
 
     m_toggleDesktopAction = m_menu->addAction(QStringLiteral("Toggle Desktop Lyrics"));
     m_toggleDesktopAction->setCheckable(true);
     m_toggleDesktopAction->setChecked(m_settings->desktopLyricsEnabled());
     connect(m_toggleDesktopAction, &QAction::triggered, this, &TrayController::toggleDesktopLyrics);
+
+    m_toggleTrayLineAction = m_menu->addAction(QStringLiteral("Toggle Tray Line"));
+    m_toggleTrayLineAction->setCheckable(true);
+    m_toggleTrayLineAction->setChecked(m_settings->menuBarLyricsEnabled());
+    connect(m_toggleTrayLineAction, &QAction::triggered, this, &TrayController::toggleTrayLine);
+
+    auto *showHud = m_menu->addAction(QStringLiteral("Show HUD"));
+    connect(showHud, &QAction::triggered, this, &TrayController::showHudRequested);
 
     m_menu->addSeparator();
     auto *offsetPlus = m_menu->addAction(QStringLiteral("Offset +100 ms"));
@@ -86,6 +92,9 @@ void TrayController::onSettingsChanged(const QString &key)
     if (key == QLatin1String("DesktopLyricsEnabled") && m_toggleDesktopAction) {
         m_toggleDesktopAction->setChecked(m_settings->desktopLyricsEnabled());
     } else if (key == QLatin1String("MenuBarLyricsEnabled")) {
+        if (m_toggleTrayLineAction) {
+            m_toggleTrayLineAction->setChecked(m_settings->menuBarLyricsEnabled());
+        }
         updateTooltip();
     }
 }
@@ -110,6 +119,11 @@ void TrayController::updateTooltip()
 void TrayController::toggleDesktopLyrics()
 {
     m_settings->setDesktopLyricsEnabled(m_toggleDesktopAction->isChecked());
+}
+
+void TrayController::toggleTrayLine()
+{
+    m_settings->setMenuBarLyricsEnabled(m_toggleTrayLineAction->isChecked());
 }
 
 void TrayController::adjustOffset(int deltaMs)
