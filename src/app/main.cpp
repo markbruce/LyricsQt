@@ -6,7 +6,9 @@
 #include <lyricsqt/LyricsController.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
+#include <lyricsqt/LrclibProvider.h>
 #include <lyricsqt/PlayerService.h>
+#include <lyricsqt/ProviderHub.h>
 #include <lyricsqt/Version.h>
 
 #include "ui/DesktopLyricsWindow.h"
@@ -25,7 +27,9 @@ int main(int argc, char *argv[])
     lyricsqt::PlayerService player(&settings);
     lyricsqt::LyricsSession session;
     lyricsqt::LyricsStore store(&settings);
-    lyricsqt::LyricsController controller(&player, &session, &store);
+    lyricsqt::ProviderHub providers;
+    providers.addProvider(new lyricsqt::LrclibProvider);
+    lyricsqt::LyricsController controller(&player, &session, &store, &providers);
 
     session.setExtraOffsetMs(settings.globalOffsetMs());
     QObject::connect(&settings, &lyricsqt::AppSettings::changed,

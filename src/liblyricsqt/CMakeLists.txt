@@ -4,8 +4,11 @@ add_library(lyricsqt
   lyrics/LyricsDocument.cpp
   lyrics/LrcParser.cpp
   lyrics/LyricsSession.cpp
+  lyrics/QualityScorer.cpp
   store/LyricsStore.cpp
   controller/LyricsController.cpp
+  providers/ProviderHub.cpp
+  providers/LrclibProvider.cpp
   player/MprisPlayerBackend.cpp
   player/PlayerService.cpp
   include/lyricsqt/Version.h
@@ -15,6 +18,10 @@ add_library(lyricsqt
   include/lyricsqt/LyricsSession.h
   include/lyricsqt/LyricsStore.h
   include/lyricsqt/LyricsController.h
+  include/lyricsqt/QualityScorer.h
+  include/lyricsqt/ILyricsProvider.h
+  include/lyricsqt/LrclibProvider.h
+  include/lyricsqt/ProviderHub.h
   include/lyricsqt/TrackInfo.h
   include/lyricsqt/PlayerService.h
   player/MprisPlayerBackend.h
