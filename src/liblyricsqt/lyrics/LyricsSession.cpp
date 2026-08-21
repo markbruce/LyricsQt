@@ -89,7 +89,8 @@ void LyricsSession::scheduleNextLineCheck()
         return;
     }
 
-    const double dt = m_lyrics->lines[next].positionSec - pos;
+    const double adjustedPos = pos + m_lyrics->offsetMs / 1000.0;
+    const double dt = m_lyrics->lines[next].positionSec - adjustedPos;
     if (dt <= 0.0) {
         return;
     }
