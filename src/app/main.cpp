@@ -10,6 +10,7 @@
 #include <lyricsqt/Version.h>
 
 #include "ui/DesktopLyricsWindow.h"
+#include "ui/LyricsHudWindow.h"
 #include "ui/TrayController.h"
 
 int main(int argc, char *argv[])
@@ -74,15 +75,18 @@ int main(int argc, char *argv[])
                    .arg(settings.lyricsSavingPath())
                    .arg(settings.loadLyricsBesideTrack());
         qDebug().noquote()
-            << QStringLiteral("[App] LyricsQt %1 desktop overlay + tray ready")
+            << QStringLiteral("[App] LyricsQt %1 HUD + desktop overlay + tray ready")
                    .arg(QLatin1String(lyricsqt::version()));
     }
 
     DesktopLyricsWindow desktopWindow(&settings, &session, &player);
+    LyricsHudWindow hudWindow(&session, &player, &store);
     TrayController tray(&settings, &session);
 
-    QObject::connect(&tray, &TrayController::showHudRequested, &app, []() {
-        qDebug().noquote() << QStringLiteral("[Tray] Show HUD (stub for Task 8)");
+    QObject::connect(&tray, &TrayController::showHudRequested, &hudWindow, [&hudWindow]() {
+        hudWindow.show();
+        hudWindow.raise();
+        hudWindow.activateWindow();
     });
     QObject::connect(&tray, &TrayController::preferencesRequested, &app, []() {
         qDebug().noquote() << QStringLiteral("[Tray] Preferences (stub)");

@@ -2,6 +2,8 @@ add_executable(lyricsqt-app
   main.cpp
   ui/DesktopLyricsWindow.cpp
   ui/DesktopLyricsWindow.h
+  ui/LyricsHudWindow.cpp
+  ui/LyricsHudWindow.h
   ui/TrayController.cpp
   ui/TrayController.h
   ${CMAKE_SOURCE_DIR}/resources/lyricsqt.qrc
