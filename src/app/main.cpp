@@ -1,6 +1,6 @@
 #include <QApplication>
 #include <QDebug>
-#include <QLabel>
+#include <QIcon>
 
 #include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LyricsController.h>
@@ -9,17 +9,30 @@
 #include <lyricsqt/PlayerService.h>
 #include <lyricsqt/Version.h>
 
+#include "ui/DesktopLyricsWindow.h"
+#include "ui/TrayController.h"
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("lyricsqt"));
     QApplication::setApplicationName(QStringLiteral("LyricsQt"));
+    QApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/lyricsqt.png")));
+    QApplication::setQuitOnLastWindowClosed(false);
 
     lyricsqt::AppSettings settings;
     lyricsqt::PlayerService player(&settings);
     lyricsqt::LyricsSession session;
     lyricsqt::LyricsStore store(&settings);
     lyricsqt::LyricsController controller(&player, &session, &store);
+
+    session.setExtraOffsetMs(settings.globalOffsetMs());
+    QObject::connect(&settings, &lyricsqt::AppSettings::changed,
+                     &session, [&settings, &session](const QString &key) {
+                         if (key == QLatin1String("GlobalLyricsOffset")) {
+                             session.setExtraOffsetMs(settings.globalOffsetMs());
+                         }
+                     });
 
     QObject::connect(&player, &lyricsqt::PlayerService::trackChanged,
                      &app, [&player](const lyricsqt::TrackInfo &track) {
@@ -60,12 +73,22 @@ int main(int argc, char *argv[])
             << QStringLiteral("[LyricsStore] savingPath=%1 besideTrack=%2")
                    .arg(settings.lyricsSavingPath())
                    .arg(settings.loadLyricsBesideTrack());
+        qDebug().noquote()
+            << QStringLiteral("[App] LyricsQt %1 desktop overlay + tray ready")
+                   .arg(QLatin1String(lyricsqt::version()));
     }
 
-    QLabel label(QStringLiteral("LyricsQt %1").arg(QLatin1String(lyricsqt::version())));
-    label.resize(320, 80);
-    label.show();
+    DesktopLyricsWindow desktopWindow(&settings, &session, &player);
+    TrayController tray(&settings, &session);
+
+    QObject::connect(&tray, &TrayController::showHudRequested, &app, []() {
+        qDebug().noquote() << QStringLiteral("[Tray] Show HUD (stub for Task 8)");
+    });
+    QObject::connect(&tray, &TrayController::preferencesRequested, &app, []() {
+        qDebug().noquote() << QStringLiteral("[Tray] Preferences (stub)");
+    });
 
     Q_UNUSED(controller);
+    Q_UNUSED(desktopWindow);
     return app.exec();
 }

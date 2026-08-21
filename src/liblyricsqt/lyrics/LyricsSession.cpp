@@ -57,6 +57,21 @@ int LyricsSession::currentLineIndex() const
     return m_currentLine;
 }
 
+void LyricsSession::setExtraOffsetMs(int offsetMs)
+{
+    if (m_extraOffsetMs == offsetMs) {
+        return;
+    }
+    m_extraOffsetMs = offsetMs;
+    recomputeCurrentLine();
+    scheduleNextLineCheck();
+}
+
+int LyricsSession::extraOffsetMs() const
+{
+    return m_extraOffsetMs;
+}
+
 double LyricsSession::effectivePositionSec() const
 {
     if (!m_playing) {
@@ -68,7 +83,7 @@ double LyricsSession::effectivePositionSec() const
 
 void LyricsSession::recomputeCurrentLine()
 {
-    const int index = m_lyrics ? m_lyrics->lineIndexAt(effectivePositionSec()) : -1;
+    const int index = m_lyrics ? m_lyrics->lineIndexAt(effectivePositionSec(), m_extraOffsetMs) : -1;
     if (index != m_currentLine) {
         m_currentLine = index;
         emit currentLineChanged(m_currentLine);
@@ -83,13 +98,13 @@ void LyricsSession::scheduleNextLineCheck()
     }
 
     const double pos = effectivePositionSec();
-    const int index = m_lyrics->lineIndexAt(pos);
+    const int index = m_lyrics->lineIndexAt(pos, m_extraOffsetMs);
     const int next = index + 1;
     if (next < 0 || next >= m_lyrics->lines.size()) {
         return;
     }
 
-    const double adjustedPos = pos + m_lyrics->offsetMs / 1000.0;
+    const double adjustedPos = pos + (m_lyrics->offsetMs + m_extraOffsetMs) / 1000.0;
     const double dt = m_lyrics->lines[next].positionSec - adjustedPos;
     if (dt <= 0.0) {
         return;

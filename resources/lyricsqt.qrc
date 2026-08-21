@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+  <qresource prefix="/">
+    <file>icons/lyricsqt.svg</file>
+    <file>icons/lyricsqt.png</file>
+  </qresource>
+</RCC>

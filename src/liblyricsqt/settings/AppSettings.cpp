@@ -1,6 +1,7 @@
 #include <lyricsqt/AppSettings.h>
 
 #include <QStandardPaths>
+#include <QtGlobal>
 
 namespace lyricsqt {
 
@@ -13,6 +14,20 @@ constexpr auto kPreferredPlayerId = "PreferredPlayerId";
 constexpr auto kGlobalOffsetMs = "GlobalLyricsOffset";
 constexpr auto kLoadLyricsBesideTrack = "LoadLyricsBesideTrack";
 constexpr auto kLyricsSavingPath = "LyricsSavingPath";
+constexpr auto kDesktopPositionXFactor = "DesktopLyricsXPositionFactor";
+constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
+constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
+
+double clampFactor(double factor)
+{
+    if (factor < 0.0) {
+        return 0.0;
+    }
+    if (factor > 1.0) {
+        return 1.0;
+    }
+    return factor;
+}
 
 } // namespace
 
@@ -128,6 +143,50 @@ void AppSettings::setLyricsSavingPath(const QString &path)
     }
     m_settings.setValue(QLatin1String(kLyricsSavingPath), path);
     emit changed(QLatin1String(kLyricsSavingPath));
+}
+
+double AppSettings::desktopPositionXFactor() const
+{
+    return m_settings.value(QLatin1String(kDesktopPositionXFactor), 0.5).toDouble();
+}
+
+void AppSettings::setDesktopPositionXFactor(double factor)
+{
+    const double clamped = clampFactor(factor);
+    if (qFuzzyCompare(desktopPositionXFactor() + 1.0, clamped + 1.0)) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopPositionXFactor), clamped);
+    emit changed(QLatin1String(kDesktopPositionXFactor));
+}
+
+double AppSettings::desktopPositionYFactor() const
+{
+    return m_settings.value(QLatin1String(kDesktopPositionYFactor), 0.5).toDouble();
+}
+
+void AppSettings::setDesktopPositionYFactor(double factor)
+{
+    const double clamped = clampFactor(factor);
+    if (qFuzzyCompare(desktopPositionYFactor() + 1.0, clamped + 1.0)) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopPositionYFactor), clamped);
+    emit changed(QLatin1String(kDesktopPositionYFactor));
+}
+
+bool AppSettings::disableLyricsWhenPaused() const
+{
+    return m_settings.value(QLatin1String(kDisableLyricsWhenPaused), false).toBool();
+}
+
+void AppSettings::setDisableLyricsWhenPaused(bool enabled)
+{
+    if (disableLyricsWhenPaused() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDisableLyricsWhenPaused), enabled);
+    emit changed(QLatin1String(kDisableLyricsWhenPaused));
 }
 
 } // namespace lyricsqt

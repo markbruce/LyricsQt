@@ -34,6 +34,15 @@ public:
     QString lyricsSavingPath() const;
     void setLyricsSavingPath(const QString &path);
 
+    double desktopPositionXFactor() const;
+    void setDesktopPositionXFactor(double factor);
+
+    double desktopPositionYFactor() const;
+    void setDesktopPositionYFactor(double factor);
+
+    bool disableLyricsWhenPaused() const;
+    void setDisableLyricsWhenPaused(bool enabled);
+
 signals:
     void changed(const QString &key);
 

@@ -21,6 +21,9 @@ private slots:
         QCOMPARE(fresh.globalOffsetMs(), 0);
         QVERIFY(fresh.loadLyricsBesideTrack());
         QVERIFY(!fresh.lyricsSavingPath().isEmpty());
+        QCOMPARE(fresh.desktopPositionXFactor(), 0.5);
+        QCOMPARE(fresh.desktopPositionYFactor(), 0.5);
+        QCOMPARE(fresh.disableLyricsWhenPaused(), false);
     }
 
     void roundtrip_offset()
@@ -33,6 +36,20 @@ private slots:
         lyricsqt::AppSettings fresh(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsRoundtrip"));
         fresh.setGlobalOffsetMs(250);
         QCOMPARE(fresh.globalOffsetMs(), 250);
+    }
+
+    void roundtrip_position_factors()
+    {
+        lyricsqt::AppSettings settings(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsPos"));
+        QSettings raw(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsPos"));
+        raw.clear();
+        raw.sync();
+
+        lyricsqt::AppSettings fresh(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsPos"));
+        fresh.setDesktopPositionXFactor(0.25);
+        fresh.setDesktopPositionYFactor(0.75);
+        QCOMPARE(fresh.desktopPositionXFactor(), 0.25);
+        QCOMPARE(fresh.desktopPositionYFactor(), 0.75);
     }
 };
 
