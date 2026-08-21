@@ -589,12 +589,14 @@ git commit -am "feat: export current lyric line for panels"
 
 ### Task 16: Polish, DE checklist, roadmap stubs
 
+**Status (2026-08-21):** Docs done. Automated `ctest` is the CI gate. GNOME Wayland interactive UI / KDE Wayland still need user confirmation — see `wayland-de-checklist.md`.
+
 **Files:**
 - Modify: `README.md`
 - Create: `docs/superpowers/plans/wayland-de-checklist.md`
 - Optional stub issue list for furigana / Windows SMTC
 
-- [ ] **Step 1: Run DE checklist on GNOME Wayland and KDE Wayland; record results in checklist doc**
+- [x] **Step 1: Run DE checklist on GNOME Wayland and KDE Wayland; record results in checklist doc**
 
 Checklist items:
 
@@ -606,9 +608,9 @@ Checklist items:
 - Offset shortcuts
 - Quit with player
 
-- [ ] **Step 2: README: build deps, run, settings paths, limitations on Wayland**
+- [x] **Step 2: README: build deps, run, settings paths, limitations on Wayland**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git commit -am "docs: README and Wayland DE verification checklist"
