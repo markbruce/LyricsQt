@@ -9,6 +9,7 @@ namespace lyricsqt {
 class LyricsSession;
 class LyricsStore;
 class PlayerService;
+class ProviderHub;
 }
 
 class LyricsHudWindow : public QWidget
@@ -18,6 +19,7 @@ public:
     LyricsHudWindow(lyricsqt::LyricsSession *session,
                     lyricsqt::PlayerService *player,
                     lyricsqt::LyricsStore *store,
+                    lyricsqt::ProviderHub *providers = nullptr,
                     QWidget *parent = nullptr);
 
 protected:
@@ -35,5 +37,6 @@ private:
     lyricsqt::LyricsSession *m_session = nullptr;
     lyricsqt::PlayerService *m_player = nullptr;
     lyricsqt::LyricsStore *m_store = nullptr;
+    lyricsqt::ProviderHub *m_providers = nullptr;
     QListWidget *m_list = nullptr;
 };

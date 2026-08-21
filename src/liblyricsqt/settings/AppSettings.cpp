@@ -17,6 +17,7 @@ constexpr auto kLyricsSavingPath = "LyricsSavingPath";
 constexpr auto kDesktopPositionXFactor = "DesktopLyricsXPositionFactor";
 constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
 constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
+constexpr auto kEnabledProviderIds = "EnabledProviderIds";
 
 double clampFactor(double factor)
 {
@@ -40,6 +41,16 @@ AppSettings::AppSettings(const QString &organization, const QString &application
     : QObject(parent)
     , m_settings(organization, application)
 {
+}
+
+QStringList AppSettings::defaultProviderIds()
+{
+    return {
+        QStringLiteral("lrclib"),
+        QStringLiteral("netease"),
+        QStringLiteral("qq"),
+        QStringLiteral("kugou"),
+    };
 }
 
 bool AppSettings::desktopLyricsEnabled() const
@@ -187,6 +198,28 @@ void AppSettings::setDisableLyricsWhenPaused(bool enabled)
     }
     m_settings.setValue(QLatin1String(kDisableLyricsWhenPaused), enabled);
     emit changed(QLatin1String(kDisableLyricsWhenPaused));
+}
+
+QStringList AppSettings::enabledProviderIds() const
+{
+    const QVariant raw = m_settings.value(QLatin1String(kEnabledProviderIds));
+    if (!raw.isValid()) {
+        return defaultProviderIds();
+    }
+    const QStringList ids = raw.toStringList();
+    if (ids.isEmpty()) {
+        return defaultProviderIds();
+    }
+    return ids;
+}
+
+void AppSettings::setEnabledProviderIds(const QStringList &ids)
+{
+    if (enabledProviderIds() == ids) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kEnabledProviderIds), ids);
+    emit changed(QLatin1String(kEnabledProviderIds));
 }
 
 } // namespace lyricsqt

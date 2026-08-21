@@ -6,9 +6,12 @@
 #include <lyricsqt/LyricsController.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
+#include <lyricsqt/KugouProvider.h>
 #include <lyricsqt/LrclibProvider.h>
+#include <lyricsqt/NetEaseProvider.h>
 #include <lyricsqt/PlayerService.h>
 #include <lyricsqt/ProviderHub.h>
+#include <lyricsqt/QQMusicProvider.h>
 #include <lyricsqt/Version.h>
 
 #include "ui/DesktopLyricsWindow.h"
@@ -29,13 +32,19 @@ int main(int argc, char *argv[])
     lyricsqt::LyricsStore store(&settings);
     lyricsqt::ProviderHub providers;
     providers.addProvider(new lyricsqt::LrclibProvider);
+    providers.addProvider(new lyricsqt::NetEaseProvider);
+    providers.addProvider(new lyricsqt::QQMusicProvider);
+    providers.addProvider(new lyricsqt::KugouProvider);
+    providers.setEnabledProviderIds(settings.enabledProviderIds());
     lyricsqt::LyricsController controller(&player, &session, &store, &providers);
 
     session.setExtraOffsetMs(settings.globalOffsetMs());
     QObject::connect(&settings, &lyricsqt::AppSettings::changed,
-                     &session, [&settings, &session](const QString &key) {
+                     &session, [&settings, &session, &providers](const QString &key) {
                          if (key == QLatin1String("GlobalLyricsOffset")) {
                              session.setExtraOffsetMs(settings.globalOffsetMs());
+                         } else if (key == QLatin1String("EnabledProviderIds")) {
+                             providers.setEnabledProviderIds(settings.enabledProviderIds());
                          }
                      });
 
@@ -84,7 +93,7 @@ int main(int argc, char *argv[])
     }
 
     DesktopLyricsWindow desktopWindow(&settings, &session, &player);
-    LyricsHudWindow hudWindow(&session, &player, &store);
+    LyricsHudWindow hudWindow(&session, &player, &store, &providers);
     TrayController tray(&settings, &session);
 
     QObject::connect(&tray, &TrayController::showHudRequested, &hudWindow, [&hudWindow]() {

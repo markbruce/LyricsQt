@@ -24,6 +24,9 @@ private slots:
         QCOMPARE(fresh.desktopPositionXFactor(), 0.5);
         QCOMPARE(fresh.desktopPositionYFactor(), 0.5);
         QCOMPARE(fresh.disableLyricsWhenPaused(), false);
+        QCOMPARE(fresh.enabledProviderIds(),
+                 (QStringList{QStringLiteral("lrclib"), QStringLiteral("netease"),
+                              QStringLiteral("qq"), QStringLiteral("kugou")}));
     }
 
     void roundtrip_offset()
@@ -50,6 +53,19 @@ private slots:
         fresh.setDesktopPositionYFactor(0.75);
         QCOMPARE(fresh.desktopPositionXFactor(), 0.25);
         QCOMPARE(fresh.desktopPositionYFactor(), 0.75);
+    }
+
+    void roundtrip_enabled_providers()
+    {
+        lyricsqt::AppSettings settings(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsProviders"));
+        QSettings raw(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsProviders"));
+        raw.clear();
+        raw.sync();
+
+        lyricsqt::AppSettings fresh(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsProviders"));
+        const QStringList ids{QStringLiteral("qq"), QStringLiteral("lrclib")};
+        fresh.setEnabledProviderIds(ids);
+        QCOMPARE(fresh.enabledProviderIds(), ids);
     }
 };
 

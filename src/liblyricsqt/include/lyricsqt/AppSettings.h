@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QSettings>
 #include <QString>
+#include <QStringList>
 
 namespace lyricsqt {
 
@@ -12,6 +13,8 @@ class AppSettings : public QObject
 public:
     explicit AppSettings(QObject *parent = nullptr);
     explicit AppSettings(const QString &organization, const QString &application, QObject *parent = nullptr);
+
+    static QStringList defaultProviderIds();
 
     bool desktopLyricsEnabled() const;
     void setDesktopLyricsEnabled(bool enabled);
@@ -42,6 +45,10 @@ public:
 
     bool disableLyricsWhenPaused() const;
     void setDisableLyricsWhenPaused(bool enabled);
+
+    /// Enabled provider ids in search order. Empty setting → defaultProviderIds().
+    QStringList enabledProviderIds() const;
+    void setEnabledProviderIds(const QStringList &ids);
 
 signals:
     void changed(const QString &key);

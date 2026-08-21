@@ -4,6 +4,7 @@
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
 #include <lyricsqt/PlayerService.h>
+#include <lyricsqt/ProviderHub.h>
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -26,11 +27,13 @@ bool isLyricsFile(const QString &path)
 LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
                                  lyricsqt::PlayerService *player,
                                  lyricsqt::LyricsStore *store,
+                                 lyricsqt::ProviderHub *providers,
                                  QWidget *parent)
     : QWidget(parent)
     , m_session(session)
     , m_player(player)
     , m_store(store)
+    , m_providers(providers)
 {
     Q_ASSERT(m_session);
     Q_ASSERT(m_player);
@@ -159,6 +162,11 @@ bool LyricsHudWindow::importLyricsFile(const QString &path)
     const lyricsqt::LyricsDocument doc = lyricsqt::LrcParser::parseFile(path);
     if (doc.lines.isEmpty()) {
         return false;
+    }
+
+    // Cancel in-flight remote search so stale results cannot overwrite the import.
+    if (m_providers) {
+        m_providers->cancel();
     }
 
     m_session->setLyrics(doc);

@@ -5,6 +5,7 @@
 #include <lyricsqt/TrackInfo.h>
 
 #include <QObject>
+#include <QStringList>
 #include <QTimer>
 #include <QVector>
 
@@ -20,6 +21,11 @@ public:
     void setTimeoutMs(int ms);
     int timeoutMs() const { return m_timeoutMs; }
 
+    /// Empty = all registered providers (registration order).
+    /// Non-empty = only listed ids, in given order.
+    void setEnabledProviderIds(const QStringList &ids);
+    QStringList enabledProviderIds() const { return m_enabledProviderIds; }
+
     void search(const TrackInfo &track);
     void cancel();
 
@@ -34,8 +40,10 @@ private:
     void onProviderSettled();
     void finishIfReady();
     void emitBestAndFinish();
+    QVector<ILyricsProvider *> activeProviders() const;
 
     QVector<ILyricsProvider *> m_providers;
+    QStringList m_enabledProviderIds;
     QTimer m_timeout;
     int m_timeoutMs = 10'000;
     quint64 m_generation = 0;

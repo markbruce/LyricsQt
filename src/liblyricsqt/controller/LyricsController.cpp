@@ -85,6 +85,13 @@ void LyricsController::onRemoteLyrics(const TrackInfo &track, const LyricsDocume
         return;
     }
 
+    // Local / HUD import wins: do not overwrite existing session lyrics with remote.
+    if (m_session->hasLyrics()) {
+        qDebug().noquote()
+            << QStringLiteral("[LyricsController] skip remote lyrics; session already has lyrics");
+        return;
+    }
+
     LyricsDocument applied = doc;
     const QUrl saved = m_store->save(track, applied);
     if (saved.isLocalFile()) {

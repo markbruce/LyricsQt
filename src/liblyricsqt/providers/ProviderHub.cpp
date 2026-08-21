@@ -38,6 +38,30 @@ void ProviderHub::setTimeoutMs(int ms)
     m_timeoutMs = qMax(0, ms);
 }
 
+void ProviderHub::setEnabledProviderIds(const QStringList &ids)
+{
+    m_enabledProviderIds = ids;
+}
+
+QVector<ILyricsProvider *> ProviderHub::activeProviders() const
+{
+    if (m_enabledProviderIds.isEmpty()) {
+        return m_providers;
+    }
+
+    QVector<ILyricsProvider *> ordered;
+    ordered.reserve(m_enabledProviderIds.size());
+    for (const QString &id : m_enabledProviderIds) {
+        for (ILyricsProvider *provider : m_providers) {
+            if (provider && provider->id() == id) {
+                ordered.append(provider);
+                break;
+            }
+        }
+    }
+    return ordered;
+}
+
 void ProviderHub::cancel()
 {
     m_timeout.stop();
@@ -58,7 +82,8 @@ void ProviderHub::search(const TrackInfo &track)
     m_candidates.clear();
     m_pendingProviders = 0;
 
-    if (track.isEmpty() || m_providers.isEmpty()) {
+    const QVector<ILyricsProvider *> providers = activeProviders();
+    if (track.isEmpty() || providers.isEmpty()) {
         m_finished = true;
         emit searchFinished(track, false);
         return;
@@ -67,7 +92,7 @@ void ProviderHub::search(const TrackInfo &track)
     const quint64 gen = m_generation;
     const LyricsSearchRequest req = LyricsSearchRequest::fromTrack(track, gen);
 
-    for (ILyricsProvider *provider : m_providers) {
+    for (ILyricsProvider *provider : providers) {
         ++m_pendingProviders;
         provider->search(req);
     }

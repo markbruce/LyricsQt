@@ -9,6 +9,9 @@ add_library(lyricsqt
   controller/LyricsController.cpp
   providers/ProviderHub.cpp
   providers/LrclibProvider.cpp
+  providers/NetEaseProvider.cpp
+  providers/QQMusicProvider.cpp
+  providers/KugouProvider.cpp
   player/MprisPlayerBackend.cpp
   player/PlayerService.cpp
   include/lyricsqt/Version.h
@@ -21,6 +24,9 @@ add_library(lyricsqt
   include/lyricsqt/QualityScorer.h
   include/lyricsqt/ILyricsProvider.h
   include/lyricsqt/LrclibProvider.h
+  include/lyricsqt/NetEaseProvider.h
+  include/lyricsqt/QQMusicProvider.h
+  include/lyricsqt/KugouProvider.h
   include/lyricsqt/ProviderHub.h
   include/lyricsqt/TrackInfo.h
   include/lyricsqt/PlayerService.h
