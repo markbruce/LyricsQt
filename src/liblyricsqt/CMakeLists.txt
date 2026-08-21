@@ -1,6 +1,8 @@
 add_library(lyricsqt
   version.cpp
+  settings/AppSettings.cpp
   include/lyricsqt/Version.h
+  include/lyricsqt/AppSettings.h
 )
 add_library(LyricsQt::lyricsqt ALIAS lyricsqt)
 
