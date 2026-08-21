@@ -166,4 +166,31 @@ QUrl LyricsStore::save(const TrackInfo &track, const LyricsDocument &doc)
     return QUrl::fromLocalFile(path);
 }
 
+bool LyricsStore::removeLocal(const TrackInfo &track)
+{
+    if (!m_settings || track.isEmpty()) {
+        return false;
+    }
+
+    const QString saveDir = m_settings->lyricsSavingPath();
+    const QString cacheBase = saveDir + QLatin1Char('/')
+        + sanitizePathComponent(track.title) + QStringLiteral(" - ")
+        + sanitizePathComponent(track.artist);
+
+    bool removedAny = false;
+    for (const QString &ext : {QStringLiteral(".lrcx"), QStringLiteral(".lrc")}) {
+        const QString path = cacheBase + ext;
+        if (!QFileInfo::exists(path)) {
+            continue;
+        }
+        if (QFile::remove(path)) {
+            removedAny = true;
+            qDebug().noquote() << QStringLiteral("[LyricsStore] removed %1").arg(path);
+        } else {
+            qDebug().noquote() << QStringLiteral("[LyricsStore] failed to remove %1").arg(path);
+        }
+    }
+    return removedAny;
+}
+
 } // namespace lyricsqt

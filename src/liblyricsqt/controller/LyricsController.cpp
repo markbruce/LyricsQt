@@ -74,7 +74,10 @@ void LyricsController::onTrackChanged(const TrackInfo &track)
                    .arg(filtered.localPath);
     } else {
         qDebug().noquote() << QStringLiteral("[LyricsController] no local lyrics yet");
-        const bool ignored = m_settings && m_settings->isNoSearchingTrackId(track.id);
+        const QString ignoreKey = !track.id.isEmpty()
+            ? track.id
+            : (track.title + QLatin1Char('|') + track.artist);
+        const bool ignored = m_settings && m_settings->isNoSearchingTrackId(ignoreKey);
         if (ignored) {
             qDebug().noquote()
                 << QStringLiteral("[LyricsController] skip provider search; track in no-search list");

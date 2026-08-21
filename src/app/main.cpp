@@ -163,14 +163,19 @@ int main(int argc, char *argv[])
         if (track.isEmpty()) {
             return;
         }
-        if (!track.id.isEmpty()) {
-            settings.addNoSearchingTrackId(track.id);
+        // Prefer real track id; fall back to title|artist when id is empty.
+        const QString ignoreKey = !track.id.isEmpty()
+            ? track.id
+            : (track.title + QLatin1Char('|') + track.artist);
+        if (!ignoreKey.isEmpty()) {
+            settings.addNoSearchingTrackId(ignoreKey);
         }
+        store.removeLocal(track);
         providers.cancel();
         session.clearLyrics();
         qDebug().noquote()
-            << QStringLiteral("[App] wrong lyrics; ignored id=%1 title=%2")
-                   .arg(track.id, track.title);
+            << QStringLiteral("[App] wrong lyrics; ignored key=%1 title=%2")
+                   .arg(ignoreKey, track.title);
     };
 
     QObject::connect(&tray, &TrayController::showHudRequested, &hudWindow, [&hudWindow]() {

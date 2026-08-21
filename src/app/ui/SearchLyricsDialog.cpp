@@ -150,9 +150,12 @@ void SearchLyricsDialog::onApplyClicked()
     m_searching = false;
     m_searchButton->setEnabled(true);
 
-    if (!current.id.isEmpty()) {
+    const QString ignoreKey = !current.id.isEmpty()
+        ? current.id
+        : (current.title + QLatin1Char('|') + current.artist);
+    if (!ignoreKey.isEmpty()) {
         QStringList ids = m_settings->noSearchingTrackIds();
-        ids.removeAll(current.id);
+        ids.removeAll(ignoreKey);
         m_settings->setNoSearchingTrackIds(ids);
     }
 
