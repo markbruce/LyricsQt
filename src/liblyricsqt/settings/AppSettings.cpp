@@ -18,6 +18,7 @@ constexpr auto kDesktopPositionXFactor = "DesktopLyricsXPositionFactor";
 constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
 constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
 constexpr auto kEnabledProviderIds = "EnabledProviderIds";
+constexpr auto kNoSearchingTrackIds = "NoSearchingTrackIds";
 
 double clampFactor(double factor)
 {
@@ -220,6 +221,38 @@ void AppSettings::setEnabledProviderIds(const QStringList &ids)
     }
     m_settings.setValue(QLatin1String(kEnabledProviderIds), ids);
     emit changed(QLatin1String(kEnabledProviderIds));
+}
+
+QStringList AppSettings::noSearchingTrackIds() const
+{
+    return m_settings.value(QLatin1String(kNoSearchingTrackIds)).toStringList();
+}
+
+void AppSettings::setNoSearchingTrackIds(const QStringList &ids)
+{
+    if (noSearchingTrackIds() == ids) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kNoSearchingTrackIds), ids);
+    emit changed(QLatin1String(kNoSearchingTrackIds));
+}
+
+void AppSettings::addNoSearchingTrackId(const QString &trackId)
+{
+    if (trackId.isEmpty() || isNoSearchingTrackId(trackId)) {
+        return;
+    }
+    QStringList ids = noSearchingTrackIds();
+    ids.append(trackId);
+    setNoSearchingTrackIds(ids);
+}
+
+bool AppSettings::isNoSearchingTrackId(const QString &trackId) const
+{
+    if (trackId.isEmpty()) {
+        return false;
+    }
+    return noSearchingTrackIds().contains(trackId);
 }
 
 } // namespace lyricsqt

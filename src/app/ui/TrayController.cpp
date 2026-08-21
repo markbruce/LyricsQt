@@ -40,6 +40,12 @@ TrayController::TrayController(lyricsqt::AppSettings *settings,
     connect(offsetMinus, &QAction::triggered, this, [this]() { adjustOffset(-100); });
 
     m_menu->addSeparator();
+    auto *searchLyrics = m_menu->addAction(QStringLiteral("Search lyrics…"));
+    connect(searchLyrics, &QAction::triggered, this, &TrayController::searchLyricsRequested);
+    auto *wrongLyrics = m_menu->addAction(QStringLiteral("Wrong lyrics"));
+    connect(wrongLyrics, &QAction::triggered, this, &TrayController::wrongLyricsRequested);
+
+    m_menu->addSeparator();
     auto *prefs = m_menu->addAction(QStringLiteral("Preferences…"));
     connect(prefs, &QAction::triggered, this, &TrayController::preferencesRequested);
 

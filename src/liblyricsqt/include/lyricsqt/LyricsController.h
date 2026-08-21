@@ -6,6 +6,7 @@
 
 namespace lyricsqt {
 
+class AppSettings;
 class LyricsSession;
 class LyricsStore;
 class PlayerService;
@@ -20,6 +21,7 @@ public:
                      LyricsSession *session,
                      LyricsStore *store,
                      ProviderHub *providers = nullptr,
+                     AppSettings *settings = nullptr,
                      QObject *parent = nullptr);
 
 private:
@@ -31,6 +33,7 @@ private:
     LyricsSession *m_session = nullptr;
     LyricsStore *m_store = nullptr;
     ProviderHub *m_providers = nullptr;
+    AppSettings *m_settings = nullptr;
     TrackInfo m_currentTrack;
 };
 

@@ -10,6 +10,8 @@
 #include <QDropEvent>
 #include <QFileInfo>
 #include <QListWidget>
+#include <QMenu>
+#include <QMenuBar>
 #include <QMimeData>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -43,6 +45,11 @@ LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
     setAcceptDrops(true);
     resize(480, 640);
 
+    auto *menuBar = new QMenuBar(this);
+    auto *lyricsMenu = menuBar->addMenu(QStringLiteral("Lyrics"));
+    lyricsMenu->addAction(QStringLiteral("Search lyrics…"), this, &LyricsHudWindow::searchLyricsRequested);
+    lyricsMenu->addAction(QStringLiteral("Wrong lyrics"), this, &LyricsHudWindow::wrongLyricsRequested);
+
     m_list = new QListWidget(this);
     m_list->setUniformItemSizes(true);
     m_list->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -55,6 +62,7 @@ LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(8, 8, 8, 8);
+    layout->setMenuBar(menuBar);
     layout->addWidget(m_list);
 
     connect(m_session, &lyricsqt::LyricsSession::lyricsChanged,

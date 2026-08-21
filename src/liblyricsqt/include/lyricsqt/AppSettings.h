@@ -50,6 +50,11 @@ public:
     QStringList enabledProviderIds() const;
     void setEnabledProviderIds(const QStringList &ids);
 
+    QStringList noSearchingTrackIds() const;
+    void setNoSearchingTrackIds(const QStringList &ids);
+    void addNoSearchingTrackId(const QString &trackId);
+    bool isNoSearchingTrackId(const QString &trackId) const;
+
 signals:
     void changed(const QString &key);
 

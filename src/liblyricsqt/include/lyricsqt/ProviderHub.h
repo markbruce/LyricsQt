@@ -26,14 +26,19 @@ public:
     void setEnabledProviderIds(const QStringList &ids);
     QStringList enabledProviderIds() const { return m_enabledProviderIds; }
 
+    /// Auto-search: emits lyricsFound with the best candidate (if any).
     void search(const TrackInfo &track);
+    /// Manual/UI search: emits candidatesReady with all scored candidates (no lyricsFound).
+    void searchCollecting(const TrackInfo &track);
     void cancel();
 
 signals:
     void lyricsFound(const TrackInfo &track, const LyricsDocument &doc);
+    void candidatesReady(const TrackInfo &track, const QVector<LyricsDocument> &docs);
     void searchFinished(const TrackInfo &track, bool found);
 
 private:
+    void startSearch(const TrackInfo &track, bool collecting);
     void onProviderResults(const QString &providerId, quint64 generation,
                            const QVector<LyricsDocument> &docs);
     void onProviderFailed(const QString &providerId, quint64 generation, const QString &error);
@@ -51,6 +56,7 @@ private:
     QVector<LyricsDocument> m_candidates;
     int m_pendingProviders = 0;
     bool m_finished = true;
+    bool m_collecting = false;
 };
 
 } // namespace lyricsqt

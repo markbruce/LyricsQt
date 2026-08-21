@@ -4,6 +4,8 @@
 
 #include <QDebug>
 
+#include <algorithm>
+
 namespace lyricsqt {
 
 ProviderHub::ProviderHub(QObject *parent)
@@ -67,6 +69,7 @@ void ProviderHub::cancel()
     m_timeout.stop();
     ++m_generation;
     m_finished = true;
+    m_collecting = false;
     m_pendingProviders = 0;
     m_candidates.clear();
     for (ILyricsProvider *provider : m_providers) {
@@ -76,8 +79,19 @@ void ProviderHub::cancel()
 
 void ProviderHub::search(const TrackInfo &track)
 {
+    startSearch(track, false);
+}
+
+void ProviderHub::searchCollecting(const TrackInfo &track)
+{
+    startSearch(track, true);
+}
+
+void ProviderHub::startSearch(const TrackInfo &track, bool collecting)
+{
     cancel();
     m_finished = false;
+    m_collecting = collecting;
     m_track = track;
     m_candidates.clear();
     m_pendingProviders = 0;
@@ -85,6 +99,10 @@ void ProviderHub::search(const TrackInfo &track)
     const QVector<ILyricsProvider *> providers = activeProviders();
     if (track.isEmpty() || providers.isEmpty()) {
         m_finished = true;
+        m_collecting = false;
+        if (collecting) {
+            emit candidatesReady(track, {});
+        }
         emit searchFinished(track, false);
         return;
     }
@@ -164,11 +182,23 @@ void ProviderHub::emitBestAndFinish()
     m_finished = true;
     m_timeout.stop();
     m_pendingProviders = 0;
+    const bool collecting = m_collecting;
+    m_collecting = false;
 
     // Cancel stragglers so late replies are ignored via generation bump... keep gen
     // so we don't invalidate the result we're about to emit; just abort network.
     for (ILyricsProvider *provider : m_providers) {
         provider->cancel();
+    }
+
+    if (collecting) {
+        QVector<LyricsDocument> sorted = m_candidates;
+        std::sort(sorted.begin(), sorted.end(), [](const LyricsDocument &a, const LyricsDocument &b) {
+            return a.quality > b.quality;
+        });
+        emit candidatesReady(m_track, sorted);
+        emit searchFinished(m_track, !sorted.isEmpty());
+        return;
     }
 
     if (m_candidates.isEmpty()) {

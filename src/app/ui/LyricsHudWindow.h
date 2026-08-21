@@ -22,6 +22,10 @@ public:
                     lyricsqt::ProviderHub *providers = nullptr,
                     QWidget *parent = nullptr);
 
+signals:
+    void searchLyricsRequested();
+    void wrongLyricsRequested();
+
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;

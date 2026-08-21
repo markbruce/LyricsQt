@@ -1,5 +1,6 @@
 #include <lyricsqt/LyricsController.h>
 
+#include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LyricsDocument.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
@@ -15,12 +16,14 @@ LyricsController::LyricsController(PlayerService *player,
                                    LyricsSession *session,
                                    LyricsStore *store,
                                    ProviderHub *providers,
+                                   AppSettings *settings,
                                    QObject *parent)
     : QObject(parent)
     , m_player(player)
     , m_session(session)
     , m_store(store)
     , m_providers(providers)
+    , m_settings(settings)
 {
     Q_ASSERT(m_player);
     Q_ASSERT(m_session);
@@ -69,7 +72,11 @@ void LyricsController::onTrackChanged(const TrackInfo &track)
                    .arg(doc->localPath);
     } else {
         qDebug().noquote() << QStringLiteral("[LyricsController] no local lyrics yet");
-        if (m_providers) {
+        const bool ignored = m_settings && m_settings->isNoSearchingTrackId(track.id);
+        if (ignored) {
+            qDebug().noquote()
+                << QStringLiteral("[LyricsController] skip provider search; track in no-search list");
+        } else if (m_providers) {
             qDebug().noquote() << QStringLiteral("[LyricsController] starting provider search");
             m_providers->search(track);
         }

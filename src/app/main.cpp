@@ -16,6 +16,7 @@
 
 #include "ui/DesktopLyricsWindow.h"
 #include "ui/LyricsHudWindow.h"
+#include "ui/SearchLyricsDialog.h"
 #include "ui/TrayController.h"
 
 int main(int argc, char *argv[])
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
     providers.addProvider(new lyricsqt::QQMusicProvider);
     providers.addProvider(new lyricsqt::KugouProvider);
     providers.setEnabledProviderIds(settings.enabledProviderIds());
-    lyricsqt::LyricsController controller(&player, &session, &store, &providers);
+    lyricsqt::LyricsController controller(&player, &session, &store, &providers, &settings);
 
     session.setExtraOffsetMs(settings.globalOffsetMs());
     QObject::connect(&settings, &lyricsqt::AppSettings::changed,
@@ -95,6 +96,29 @@ int main(int argc, char *argv[])
     DesktopLyricsWindow desktopWindow(&settings, &session, &player);
     LyricsHudWindow hudWindow(&session, &player, &store, &providers);
     TrayController tray(&settings, &session);
+    SearchLyricsDialog searchDialog(&player, &session, &store, &providers, &settings);
+
+    const auto openSearchDialog = [&searchDialog]() {
+        searchDialog.reloadFromCurrentTrack();
+        searchDialog.show();
+        searchDialog.raise();
+        searchDialog.activateWindow();
+    };
+
+    const auto markWrongLyrics = [&]() {
+        const lyricsqt::TrackInfo track = player.currentTrack();
+        if (track.isEmpty()) {
+            return;
+        }
+        if (!track.id.isEmpty()) {
+            settings.addNoSearchingTrackId(track.id);
+        }
+        providers.cancel();
+        session.clearLyrics();
+        qDebug().noquote()
+            << QStringLiteral("[App] wrong lyrics; ignored id=%1 title=%2")
+                   .arg(track.id, track.title);
+    };
 
     QObject::connect(&tray, &TrayController::showHudRequested, &hudWindow, [&hudWindow]() {
         hudWindow.show();
@@ -104,6 +128,10 @@ int main(int argc, char *argv[])
     QObject::connect(&tray, &TrayController::preferencesRequested, &app, []() {
         qDebug().noquote() << QStringLiteral("[Tray] Preferences (stub)");
     });
+    QObject::connect(&tray, &TrayController::searchLyricsRequested, &app, openSearchDialog);
+    QObject::connect(&tray, &TrayController::wrongLyricsRequested, &app, markWrongLyrics);
+    QObject::connect(&hudWindow, &LyricsHudWindow::searchLyricsRequested, &app, openSearchDialog);
+    QObject::connect(&hudWindow, &LyricsHudWindow::wrongLyricsRequested, &app, markWrongLyrics);
 
     Q_UNUSED(controller);
     Q_UNUSED(desktopWindow);

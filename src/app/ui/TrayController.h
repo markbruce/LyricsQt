@@ -23,6 +23,8 @@ public:
 signals:
     void showHudRequested();
     void preferencesRequested();
+    void searchLyricsRequested();
+    void wrongLyricsRequested();
 
 private:
     void onCurrentLineChanged(int index);

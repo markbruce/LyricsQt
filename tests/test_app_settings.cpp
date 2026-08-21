@@ -27,6 +27,7 @@ private slots:
         QCOMPARE(fresh.enabledProviderIds(),
                  (QStringList{QStringLiteral("lrclib"), QStringLiteral("netease"),
                               QStringLiteral("qq"), QStringLiteral("kugou")}));
+        QCOMPARE(fresh.noSearchingTrackIds(), QStringList());
     }
 
     void roundtrip_offset()
@@ -66,6 +67,25 @@ private slots:
         const QStringList ids{QStringLiteral("qq"), QStringLiteral("lrclib")};
         fresh.setEnabledProviderIds(ids);
         QCOMPARE(fresh.enabledProviderIds(), ids);
+    }
+
+    void no_searching_track_ids_helpers()
+    {
+        lyricsqt::AppSettings settings(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsNoSearch"));
+        QSettings raw(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsNoSearch"));
+        raw.clear();
+        raw.sync();
+
+        lyricsqt::AppSettings fresh(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsNoSearch"));
+        QCOMPARE(fresh.isNoSearchingTrackId(QStringLiteral("track-1")), false);
+        fresh.addNoSearchingTrackId(QStringLiteral("track-1"));
+        fresh.addNoSearchingTrackId(QStringLiteral("track-1")); // no duplicate
+        fresh.addNoSearchingTrackId(QString()); // ignored
+        QVERIFY(fresh.isNoSearchingTrackId(QStringLiteral("track-1")));
+        QCOMPARE(fresh.noSearchingTrackIds(), QStringList{QStringLiteral("track-1")});
+        fresh.addNoSearchingTrackId(QStringLiteral("track-2"));
+        QCOMPARE(fresh.noSearchingTrackIds(),
+                 (QStringList{QStringLiteral("track-1"), QStringLiteral("track-2")}));
     }
 };
 
