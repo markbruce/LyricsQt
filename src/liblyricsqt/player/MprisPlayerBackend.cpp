@@ -134,7 +134,13 @@ void MprisPlayerBackend::disconnectFromService()
     m_track = TrackInfo{};
     m_playbackStatus = QStringLiteral("Stopped");
     m_positionSec = 0.0;
+
+    // Always clear downstream state so UI cannot keep a stale track after
+    // disconnect or player switch (connectToService disconnects first).
     emit connectionChanged(false);
+    emit trackChanged(m_track);
+    emit playbackStatusChanged(m_playbackStatus);
+    emit positionChanged(m_positionSec);
 }
 
 TrackInfo MprisPlayerBackend::track() const
@@ -163,8 +169,9 @@ void MprisPlayerBackend::refreshAll()
         return;
     }
 
+    const QString serviceForCall = m_serviceName;
     QDBusMessage msg = QDBusMessage::createMethodCall(
-        m_serviceName,
+        serviceForCall,
         QLatin1String(kObjectPath),
         QLatin1String(kPropsIface),
         QStringLiteral("GetAll"));
@@ -172,6 +179,7 @@ void MprisPlayerBackend::refreshAll()
 
     auto *watcher = new QDBusPendingCallWatcher(
         QDBusConnection::sessionBus().asyncCall(msg), this);
+    watcher->setProperty("mprisService", serviceForCall);
     connect(watcher, &QDBusPendingCallWatcher::finished,
             this, &MprisPlayerBackend::onGetAllFinished);
 }
@@ -182,8 +190,9 @@ void MprisPlayerBackend::updatePosition()
         return;
     }
 
+    const QString serviceForCall = m_serviceName;
     QDBusMessage msg = QDBusMessage::createMethodCall(
-        m_serviceName,
+        serviceForCall,
         QLatin1String(kObjectPath),
         QLatin1String(kPropsIface),
         QStringLiteral("Get"));
@@ -191,6 +200,7 @@ void MprisPlayerBackend::updatePosition()
 
     auto *watcher = new QDBusPendingCallWatcher(
         QDBusConnection::sessionBus().asyncCall(msg), this);
+    watcher->setProperty("mprisService", serviceForCall);
     connect(watcher, &QDBusPendingCallWatcher::finished,
             this, &MprisPlayerBackend::onGetPositionFinished);
 }
@@ -248,6 +258,11 @@ void MprisPlayerBackend::onSeeked(qint64 positionUs)
 void MprisPlayerBackend::onGetAllFinished(QDBusPendingCallWatcher *watcher)
 {
     watcher->deleteLater();
+    const QString serviceForCall = watcher->property("mprisService").toString();
+    if (serviceForCall.isEmpty() || serviceForCall != m_serviceName) {
+        return;
+    }
+
     QDBusPendingReply<QVariantMap> reply = *watcher;
     if (reply.isError()) {
         return;
@@ -269,6 +284,11 @@ void MprisPlayerBackend::onGetAllFinished(QDBusPendingCallWatcher *watcher)
 void MprisPlayerBackend::onGetPositionFinished(QDBusPendingCallWatcher *watcher)
 {
     watcher->deleteLater();
+    const QString serviceForCall = watcher->property("mprisService").toString();
+    if (serviceForCall.isEmpty() || serviceForCall != m_serviceName) {
+        return;
+    }
+
     QDBusPendingReply<QDBusVariant> reply = *watcher;
     if (reply.isError()) {
         return;

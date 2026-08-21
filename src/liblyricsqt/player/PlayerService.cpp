@@ -148,13 +148,14 @@ void PlayerService::selectAndConnectPlayer()
     const QString previous = m_backend->serviceName();
 
     if (chosen.isEmpty()) {
-        if (m_backend->isConnected()) {
-            m_backend->disconnectFromService();
-            if (m_playing) {
-                m_playing = false;
-                emit playbackChanged(false);
+        if (m_backend->isConnected() || m_playing || !previous.isEmpty()) {
+            // disconnectFromService emits cleared track/playback/position;
+            // slots forward those to PlayerService consumers.
+            if (m_backend->isConnected()) {
+                m_backend->disconnectFromService();
+            } else {
+                clearPlaybackState();
             }
-            emit trackChanged(TrackInfo{});
             emit activePlayerChanged(QString());
             updatePollingTimer();
         }
@@ -162,6 +163,8 @@ void PlayerService::selectAndConnectPlayer()
     }
 
     if (previous != chosen) {
+        // connectToService disconnects the previous player first, which emits
+        // empty track + Stopped so UI never keeps the old player's state.
         m_backend->connectToService(chosen);
         emit activePlayerChanged(chosen);
     } else if (!m_backend->isConnected()) {
@@ -208,6 +211,16 @@ QString PlayerService::playbackStatusFor(const QString &serviceName) const
     return reply.value().variant().toString();
 }
 
+void PlayerService::clearPlaybackState()
+{
+    if (m_playing) {
+        m_playing = false;
+        emit playbackChanged(false);
+    }
+    emit trackChanged(TrackInfo{});
+    emit positionChanged(0.0);
+}
+
 void PlayerService::onBackendTrackChanged(const TrackInfo &track)
 {
     emit trackChanged(track);
@@ -222,8 +235,9 @@ void PlayerService::onBackendPlaybackStatusChanged(const QString &status)
     }
     updatePollingTimer();
 
-    // When no preferred player is pinned, re-pick so a newly Playing player wins.
-    if (m_preferredPlayerId.isEmpty()) {
+    // Only re-select when something starts Playing; Stopped during a player
+    // switch must not recurse into selectAndConnectPlayer mid-disconnect.
+    if (m_preferredPlayerId.isEmpty() && playing) {
         selectAndConnectPlayer();
     }
 }

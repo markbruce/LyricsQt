@@ -40,6 +40,7 @@ private:
     void selectAndConnectPlayer();
     QString choosePlayer(const QStringList &players) const;
     QString playbackStatusFor(const QString &serviceName) const;
+    void clearPlaybackState();
     void onBackendTrackChanged(const TrackInfo &track);
     void onBackendPlaybackStatusChanged(const QString &status);
     void onBackendPositionChanged(double positionSec);
