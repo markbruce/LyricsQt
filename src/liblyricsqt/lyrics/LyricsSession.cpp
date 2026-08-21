@@ -2,6 +2,8 @@
 
 #include <QDateTime>
 
+#include <cmath>
+
 namespace lyricsqt {
 
 LyricsSession::LyricsSession(QObject *parent)
@@ -45,9 +47,18 @@ const LyricsDocument *LyricsSession::lyrics() const
 
 void LyricsSession::setPlayback(bool playing, double positionSec)
 {
+    constexpr double kEps = 0.08;
+    if (std::abs(positionSec - m_positionSec) > kEps) {
+        // Real MPRIS movement (or seek). Safe to interpolate between polls.
+        m_positionAdvances = true;
+    }
+
     m_playing = playing;
     m_positionSec = positionSec;
     m_positionStampMs = QDateTime::currentMSecsSinceEpoch();
+    if (!playing) {
+        m_positionAdvances = false;
+    }
     recomputeCurrentLine();
     scheduleNextLineCheck();
 }
@@ -74,11 +85,12 @@ int LyricsSession::extraOffsetMs() const
 
 double LyricsSession::effectivePositionSec() const
 {
-    if (!m_playing) {
+    if (!m_playing || !m_positionAdvances) {
         return m_positionSec;
     }
     const qint64 elapsedMs = QDateTime::currentMSecsSinceEpoch() - m_positionStampMs;
-    return m_positionSec + elapsedMs / 1000.0;
+    // Cap so a missed poll cannot runaway if Position freezes mid-song.
+    return m_positionSec + qMin(elapsedMs / 1000.0, 1.5);
 }
 
 void LyricsSession::recomputeCurrentLine()

@@ -1,8 +1,11 @@
 #include <QApplication>
+#include <QByteArray>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QIcon>
+
+#include <cstdio>
 
 #include <lyricsqt/AppSettings.h>
 #include <lyricsqt/ExportServer.h>
@@ -24,8 +27,34 @@
 #include "ui/SearchLyricsDialog.h"
 #include "ui/TrayController.h"
 
+namespace {
+
+// GNOME on Wayland ignores Qt::WindowStaysOnTopHint for native Wayland surfaces.
+// Prefer XWayland (xcb) unless the user already set QT_QPA_PLATFORM.
+void preferX11BackendForAlwaysOnTop()
+{
+    if (!qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
+        return;
+    }
+    const QByteArray session = qgetenv("XDG_SESSION_TYPE");
+    const QByteArray desktop = qgetenv("XDG_CURRENT_DESKTOP");
+    if (session != "wayland") {
+        return;
+    }
+    if (!desktop.toUpper().contains("GNOME")) {
+        return;
+    }
+    qputenv("QT_QPA_PLATFORM", "xcb");
+    std::fprintf(stderr,
+                 "[App] GNOME Wayland detected: using XWayland (xcb) so desktop lyrics can stay on top\n");
+}
+
+} // namespace
+
 int main(int argc, char *argv[])
 {
+    preferX11BackendForAlwaysOnTop();
+
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("lyricsqt"));
     QApplication::setApplicationName(QStringLiteral("LyricsQt"));

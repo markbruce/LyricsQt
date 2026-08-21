@@ -1,21 +1,27 @@
 #include "DesktopLyricsWindow.h"
 
+#include "KaraokeLyricLabel.h"
+
 #include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/PlayerService.h>
 
 #include <QGuiApplication>
-#include <QLabel>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QPaintEvent>
 #include <QScreen>
 #include <QShowEvent>
+#include <QTimer>
 #include <QVBoxLayout>
 
 DesktopLyricsWindow::DesktopLyricsWindow(lyricsqt::AppSettings *settings,
                                          lyricsqt::LyricsSession *session,
                                          lyricsqt::PlayerService *player,
                                          QWidget *parent)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint)
+    : QWidget(parent,
+              Qt::FramelessWindowHint | Qt::Tool | Qt::WindowStaysOnTopHint
+                  | Qt::WindowDoesNotAcceptFocus)
     , m_settings(settings)
     , m_session(session)
     , m_player(player)
@@ -26,31 +32,32 @@ DesktopLyricsWindow::DesktopLyricsWindow(lyricsqt::AppSettings *settings,
 
     setAttribute(Qt::WA_TranslucentBackground);
     setAttribute(Qt::WA_ShowWithoutActivating);
+    setAttribute(Qt::WA_X11NetWmWindowTypeNotification, true);
     setWindowTitle(QStringLiteral("LyricsQt Desktop Lyrics"));
+    setWindowFlag(Qt::WindowStaysOnTopHint, true);
 
-    m_primary = new QLabel(this);
-    m_primary->setAlignment(Qt::AlignCenter);
-    m_primary->setWordWrap(true);
-    m_primary->setStyleSheet(QStringLiteral(
-        "QLabel { color: white; font-size: 28px; font-weight: 600;"
-        " background: transparent; }"));
+    m_primary = new KaraokeLyricLabel(this);
+    m_primary->setLyricFont(QFont(QStringLiteral("Sans Serif"), 30, QFont::Bold));
 
-    m_secondary = new QLabel(this);
-    m_secondary->setAlignment(Qt::AlignCenter);
-    m_secondary->setWordWrap(true);
-    m_secondary->setStyleSheet(QStringLiteral(
-        "QLabel { color: rgba(255,255,255,180); font-size: 18px;"
-        " background: transparent; }"));
+    m_secondary = new KaraokeLyricLabel(this);
+    m_secondary->setLyricFont(QFont(QStringLiteral("Sans Serif"), 18, QFont::DemiBold));
+    m_secondary->setUnplayedColor(QColor(0x9B, 0xC9, 0xFF));
+    m_secondary->setPlayedColor(QColor(0x9B, 0xC9, 0xFF));
+    m_secondary->setProgress(0.0);
 
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(24, 16, 24, 16);
-    layout->setSpacing(6);
+    layout->setContentsMargins(28, 18, 28, 18);
+    layout->setSpacing(8);
     layout->addWidget(m_primary);
     layout->addWidget(m_secondary);
 
-    setMinimumWidth(320);
-    setMinimumHeight(72);
-    resize(640, 120);
+    setMinimumWidth(360);
+    setMinimumHeight(88);
+    resize(720, 140);
+
+    m_progressTimer = new QTimer(this);
+    m_progressTimer->setInterval(33);
+    connect(m_progressTimer, &QTimer::timeout, this, &DesktopLyricsWindow::updateKaraokeProgress);
 
     connect(m_session, &lyricsqt::LyricsSession::currentLineChanged,
             this, &DesktopLyricsWindow::onCurrentLineChanged);
@@ -58,12 +65,22 @@ DesktopLyricsWindow::DesktopLyricsWindow(lyricsqt::AppSettings *settings,
             this, &DesktopLyricsWindow::onLyricsChanged);
     connect(m_settings, &lyricsqt::AppSettings::changed,
             this, &DesktopLyricsWindow::onSettingsChanged);
-    connect(m_player, &lyricsqt::PlayerService::playbackChanged,
-            this, [this](bool) { updateVisibility(); });
+    connect(m_player, &lyricsqt::PlayerService::playbackChanged, this, [this](bool playing) {
+        updateVisibility();
+        if (playing) {
+            m_progressTimer->start();
+        } else {
+            m_progressTimer->stop();
+            updateKaraokeProgress();
+        }
+    });
 
     refreshText();
     applyPositionFromSettings();
     updateVisibility();
+    if (m_player->isPlaying()) {
+        m_progressTimer->start();
+    }
 }
 
 void DesktopLyricsWindow::mousePressEvent(QMouseEvent *event)
@@ -101,7 +118,18 @@ void DesktopLyricsWindow::mouseReleaseEvent(QMouseEvent *event)
 void DesktopLyricsWindow::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
+    setWindowFlag(Qt::WindowStaysOnTopHint, true);
     applyPositionFromSettings();
+    raise();
+}
+
+void DesktopLyricsWindow::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setPen(Qt::NoPen);
+    p.setBrush(QColor(0, 0, 0, 150));
+    p.drawRoundedRect(rect().adjusted(1, 1, -1, -1), 12, 12);
 }
 
 void DesktopLyricsWindow::onCurrentLineChanged(int)
@@ -137,6 +165,8 @@ void DesktopLyricsWindow::refreshText()
         m_primary->setText(QString());
         m_secondary->setText(QString());
         m_secondary->hide();
+        m_primary->setProgress(0.0);
+        adjustSize();
         return;
     }
 
@@ -152,7 +182,35 @@ void DesktopLyricsWindow::refreshText()
 
     m_secondary->setText(secondary);
     m_secondary->setVisible(!secondary.isEmpty());
+    updateKaraokeProgress();
     adjustSize();
+}
+
+void DesktopLyricsWindow::updateKaraokeProgress()
+{
+    m_primary->setProgress(lineProgress());
+}
+
+qreal DesktopLyricsWindow::lineProgress() const
+{
+    const auto *lyrics = m_session->lyrics();
+    const int index = m_session->currentLineIndex();
+    if (!lyrics || index < 0 || index >= lyrics->lines.size()) {
+        return 0.0;
+    }
+
+    const double pos = m_session->effectivePositionSec()
+        + (lyrics->offsetMs + m_session->extraOffsetMs()) / 1000.0;
+    const double start = lyrics->lines.at(index).positionSec;
+    double end = start + 4.0;
+    if (index + 1 < lyrics->lines.size()) {
+        end = lyrics->lines.at(index + 1).positionSec;
+    }
+    const double dur = end - start;
+    if (dur <= 0.05) {
+        return pos >= start ? 1.0 : 0.0;
+    }
+    return qBound(0.0, (pos - start) / dur, 1.0);
 }
 
 void DesktopLyricsWindow::updateVisibility()
@@ -161,6 +219,7 @@ void DesktopLyricsWindow::updateVisibility()
     const bool hideWhenPaused = m_settings->disableLyricsWhenPaused() && !m_player->isPlaying();
     if (enabled && !hideWhenPaused) {
         show();
+        setWindowFlag(Qt::WindowStaysOnTopHint, true);
         raise();
     } else {
         hide();

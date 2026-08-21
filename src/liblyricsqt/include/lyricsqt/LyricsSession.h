@@ -21,6 +21,10 @@ public:
 
     void setPlayback(bool playing, double positionSec);
     int currentLineIndex() const;
+    // Wall-clock-adjusted playhead used for line index + karaoke progress.
+    // Does not extrapolate until MPRIS Position has been observed to advance
+    // (Chromium/Edge often report Position=0 forever).
+    double effectivePositionSec() const;
 
     void setExtraOffsetMs(int offsetMs);
     int extraOffsetMs() const;
@@ -32,7 +36,6 @@ signals:
 private:
     void recomputeCurrentLine();
     void scheduleNextLineCheck();
-    double effectivePositionSec() const;
 
     std::optional<LyricsDocument> m_lyrics;
     int m_currentLine = -1;
@@ -40,6 +43,7 @@ private:
     double m_positionSec = 0.0;
     qint64 m_positionStampMs = 0;
     int m_extraOffsetMs = 0;
+    bool m_positionAdvances = false;
     QTimer m_lineCheckTimer;
 };
 

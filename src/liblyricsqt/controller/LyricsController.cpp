@@ -121,7 +121,23 @@ void LyricsController::onRemoteLyrics(const TrackInfo &track, const LyricsDocume
 
 void LyricsController::syncPlayback()
 {
-    m_session->setPlayback(m_player->isPlaying(), m_player->positionSec());
+    static bool warnedStuckPosition = false;
+    const double pos = m_player->positionSec();
+    const bool playing = m_player->isPlaying();
+    if (playing && pos < 0.05) {
+        // Chromium/Edge MPRIS often reports Position=0 forever.
+        if (!warnedStuckPosition) {
+            warnedStuckPosition = true;
+            qWarning().noquote()
+                << QStringLiteral(
+                       "[LyricsController] player MPRIS Position stays near 0; "
+                       "lyrics cannot sync until you use a player that reports Position "
+                       "(e.g. Spotify, VLC, QQ Music desktop). Browser players usually cannot.");
+        }
+    } else if (pos >= 0.05) {
+        warnedStuckPosition = false;
+    }
+    m_session->setPlayback(playing, pos);
 }
 
 } // namespace lyricsqt

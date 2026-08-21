@@ -4,6 +4,8 @@ add_executable(lyricsqt-app
   AutostartHelper.h
   ui/DesktopLyricsWindow.cpp
   ui/DesktopLyricsWindow.h
+  ui/KaraokeLyricLabel.cpp
+  ui/KaraokeLyricLabel.h
   ui/LyricsHudWindow.cpp
   ui/LyricsHudWindow.h
   ui/SearchLyricsDialog.cpp
