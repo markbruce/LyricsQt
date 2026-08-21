@@ -23,3 +23,7 @@ add_test(NAME QualityScorer COMMAND test_quality_scorer)
 add_executable(test_lyrics_filter test_lyrics_filter.cpp)
 target_link_libraries(test_lyrics_filter PRIVATE LyricsQt::lyricsqt Qt6::Test)
 add_test(NAME LyricsFilter COMMAND test_lyrics_filter)
+
+add_executable(test_export_server test_export_server.cpp)
+target_link_libraries(test_export_server PRIVATE LyricsQt::lyricsqt Qt6::Test)
+add_test(NAME ExportServer COMMAND test_export_server)

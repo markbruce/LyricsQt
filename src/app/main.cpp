@@ -1,8 +1,11 @@
 #include <QApplication>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QDebug>
 #include <QIcon>
 
 #include <lyricsqt/AppSettings.h>
+#include <lyricsqt/ExportServer.h>
 #include <lyricsqt/LyricsController.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
@@ -26,8 +29,20 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("lyricsqt"));
     QApplication::setApplicationName(QStringLiteral("LyricsQt"));
+    QApplication::setApplicationVersion(QLatin1String(lyricsqt::version()));
     QApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/lyricsqt.png")));
     QApplication::setQuitOnLastWindowClosed(false);
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QStringLiteral("LyricsQt — desktop lyrics for Linux"));
+    parser.addHelpOption();
+    parser.addVersionOption();
+    QCommandLineOption pipeOption(
+        QStringLiteral("pipe"),
+        QStringLiteral("Write each current lyric line as UTF-8 + newline to stdout (panel export)"));
+    parser.addOption(pipeOption);
+    parser.process(app);
+    const bool pipeMode = parser.isSet(pipeOption);
 
     lyricsqt::AppSettings settings;
     lyricsqt::AutostartHelper::syncFromSettings(settings.autostartEnabled());
@@ -43,15 +58,40 @@ int main(int argc, char *argv[])
     providers.setEnabledProviderIds(settings.enabledProviderIds());
     lyricsqt::LyricsController controller(&player, &session, &store, &providers, &settings);
 
+    lyricsqt::ExportServer exportServer(&session, &player);
+    exportServer.setPipeMode(pipeMode);
+    const auto syncExportServer = [&]() {
+        if (settings.exportEnabled() || pipeMode) {
+            if (!exportServer.isRunning()) {
+                if (!exportServer.start()) {
+                    qWarning().noquote()
+                        << QStringLiteral("[Export] failed to start socket=%1")
+                               .arg(exportServer.socketPath());
+                } else {
+                    qDebug().noquote()
+                        << QStringLiteral("[Export] listening socket=%1 pipe=%2 dbus=org.lyricsqt.Export")
+                               .arg(exportServer.socketPath())
+                               .arg(pipeMode);
+                }
+            }
+        } else if (exportServer.isRunning()) {
+            exportServer.stop();
+            qDebug().noquote() << QStringLiteral("[Export] stopped");
+        }
+    };
+    syncExportServer();
+
     session.setExtraOffsetMs(settings.globalOffsetMs());
     QObject::connect(&settings, &lyricsqt::AppSettings::changed,
-                     &session, [&settings, &session, &providers](const QString &key) {
+                     &session, [&settings, &session, &providers, &syncExportServer](const QString &key) {
                          if (key == QLatin1String("GlobalLyricsOffset")) {
                              session.setExtraOffsetMs(settings.globalOffsetMs());
                          } else if (key == QLatin1String("EnabledProviderIds")) {
                              providers.setEnabledProviderIds(settings.enabledProviderIds());
                          } else if (key == QLatin1String("AutostartEnabled")) {
                              lyricsqt::AutostartHelper::syncFromSettings(settings.autostartEnabled());
+                         } else if (key == QLatin1String("ExportEnabled")) {
+                             syncExportServer();
                          }
                      });
 

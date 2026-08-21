@@ -15,6 +15,9 @@ add_library(lyricsqt
   providers/KugouProvider.cpp
   player/MprisPlayerBackend.cpp
   player/PlayerService.cpp
+  export/ExportServer.cpp
+  export/ExportAdaptor.cpp
+  export/ExportAdaptor.h
   include/lyricsqt/Version.h
   include/lyricsqt/AppSettings.h
   include/lyricsqt/LyricsDocument.h
@@ -32,6 +35,7 @@ add_library(lyricsqt
   include/lyricsqt/ProviderHub.h
   include/lyricsqt/TrackInfo.h
   include/lyricsqt/PlayerService.h
+  include/lyricsqt/ExportServer.h
   player/MprisPlayerBackend.h
 )
 add_library(LyricsQt::lyricsqt ALIAS lyricsqt)
