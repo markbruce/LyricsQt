@@ -2,7 +2,7 @@
 
 Linux-first desktop lyrics client inspired by [LyricsX](https://github.com/ddddxxx/LyricsX), built with C++20 and Qt 6 (QWidget).
 
-Status: design and implementation plan ready; application code not started yet.
+Status: scaffolding in progress. Docs and Task 1 CMake skeleton are in tree.
 
 ## Docs
 
