@@ -124,6 +124,8 @@ void DesktopLyricsWindow::onSettingsChanged(const QString &key)
         if (!m_dragging) {
             applyPositionFromSettings();
         }
+    } else if (key == QLatin1String("PreferBilingualLyrics")) {
+        refreshText();
     }
 }
 
@@ -142,7 +144,7 @@ void DesktopLyricsWindow::refreshText()
     m_primary->setText(line.content);
 
     QString secondary;
-    if (!line.translation.isEmpty()) {
+    if (m_settings->preferBilingualLyrics() && !line.translation.isEmpty()) {
         secondary = line.translation;
     } else if (index + 1 < lyrics->lines.size()) {
         secondary = lyrics->lines.at(index + 1).content;

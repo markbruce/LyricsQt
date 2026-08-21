@@ -1,6 +1,8 @@
 #include "LyricsHudWindow.h"
 
+#include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LrcParser.h>
+#include <lyricsqt/LyricsFilter.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
 #include <lyricsqt/PlayerService.h>
@@ -30,12 +32,14 @@ LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
                                  lyricsqt::PlayerService *player,
                                  lyricsqt::LyricsStore *store,
                                  lyricsqt::ProviderHub *providers,
+                                 lyricsqt::AppSettings *settings,
                                  QWidget *parent)
     : QWidget(parent)
     , m_session(session)
     , m_player(player)
     , m_store(store)
     , m_providers(providers)
+    , m_settings(settings)
 {
     Q_ASSERT(m_session);
     Q_ASSERT(m_player);
@@ -51,7 +55,7 @@ LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
     lyricsMenu->addAction(QStringLiteral("Wrong lyrics"), this, &LyricsHudWindow::wrongLyricsRequested);
 
     m_list = new QListWidget(this);
-    m_list->setUniformItemSizes(true);
+    m_list->setUniformItemSizes(false);
     m_list->setSelectionMode(QAbstractItemView::SingleSelection);
     m_list->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     m_list->setStyleSheet(QStringLiteral(
@@ -71,6 +75,14 @@ LyricsHudWindow::LyricsHudWindow(lyricsqt::LyricsSession *session,
             this, &LyricsHudWindow::onCurrentLineChanged);
     connect(m_list, &QListWidget::itemDoubleClicked,
             this, &LyricsHudWindow::onItemDoubleClicked);
+    if (m_settings) {
+        connect(m_settings, &lyricsqt::AppSettings::changed, this, [this](const QString &key) {
+            if (key == QLatin1String("PreferBilingualLyrics")) {
+                rebuildList();
+                highlightCurrentLine(m_session->currentLineIndex());
+            }
+        });
+    }
 
     rebuildList();
     highlightCurrentLine(m_session->currentLineIndex());
@@ -142,8 +154,13 @@ void LyricsHudWindow::rebuildList()
         return;
     }
 
+    const bool bilingual = !m_settings || m_settings->preferBilingualLyrics();
     for (const auto &line : lyrics->lines) {
-        auto *item = new QListWidgetItem(line.content, m_list);
+        QString text = line.content;
+        if (bilingual && !line.translation.isEmpty()) {
+            text += QLatin1Char('\n') + line.translation;
+        }
+        auto *item = new QListWidgetItem(text, m_list);
         item->setData(Qt::UserRole, line.positionSec);
         if (!line.translation.isEmpty()) {
             item->setToolTip(line.translation);
@@ -167,7 +184,12 @@ void LyricsHudWindow::highlightCurrentLine(int index)
 
 bool LyricsHudWindow::importLyricsFile(const QString &path)
 {
-    const lyricsqt::LyricsDocument doc = lyricsqt::LrcParser::parseFile(path);
+    lyricsqt::LyricsDocument doc = lyricsqt::LrcParser::parseFile(path);
+    if (doc.lines.isEmpty()) {
+        return false;
+    }
+
+    doc = lyricsqt::LyricsFilter::apply(doc, m_settings);
     if (doc.lines.isEmpty()) {
         return false;
     }

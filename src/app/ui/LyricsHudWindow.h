@@ -6,6 +6,7 @@ class QListWidget;
 class QListWidgetItem;
 
 namespace lyricsqt {
+class AppSettings;
 class LyricsSession;
 class LyricsStore;
 class PlayerService;
@@ -20,6 +21,7 @@ public:
                     lyricsqt::PlayerService *player,
                     lyricsqt::LyricsStore *store,
                     lyricsqt::ProviderHub *providers = nullptr,
+                    lyricsqt::AppSettings *settings = nullptr,
                     QWidget *parent = nullptr);
 
 signals:
@@ -42,5 +44,6 @@ private:
     lyricsqt::PlayerService *m_player = nullptr;
     lyricsqt::LyricsStore *m_store = nullptr;
     lyricsqt::ProviderHub *m_providers = nullptr;
+    lyricsqt::AppSettings *m_settings = nullptr;
     QListWidget *m_list = nullptr;
 };

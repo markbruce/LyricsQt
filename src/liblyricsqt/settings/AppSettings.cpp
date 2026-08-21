@@ -1,5 +1,7 @@
 #include <lyricsqt/AppSettings.h>
 
+#include <lyricsqt/LyricsFilter.h>
+
 #include <QStandardPaths>
 #include <QtGlobal>
 
@@ -19,6 +21,10 @@ constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
 constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
 constexpr auto kEnabledProviderIds = "EnabledProviderIds";
 constexpr auto kNoSearchingTrackIds = "NoSearchingTrackIds";
+constexpr auto kLyricsFilterEnabled = "LyricsFilterEnabled";
+constexpr auto kLyricsSmartFilterEnabled = "LyricsSmartFilterEnabled";
+constexpr auto kLyricsFilterKeys = "LyricsFilterKeys";
+constexpr auto kPreferBilingualLyrics = "PreferBilingualLyrics";
 
 double clampFactor(double factor)
 {
@@ -253,6 +259,66 @@ bool AppSettings::isNoSearchingTrackId(const QString &trackId) const
         return false;
     }
     return noSearchingTrackIds().contains(trackId);
+}
+
+bool AppSettings::lyricsFilterEnabled() const
+{
+    return m_settings.value(QLatin1String(kLyricsFilterEnabled), true).toBool();
+}
+
+void AppSettings::setLyricsFilterEnabled(bool enabled)
+{
+    if (lyricsFilterEnabled() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kLyricsFilterEnabled), enabled);
+    emit changed(QLatin1String(kLyricsFilterEnabled));
+}
+
+bool AppSettings::lyricsSmartFilterEnabled() const
+{
+    return m_settings.value(QLatin1String(kLyricsSmartFilterEnabled), true).toBool();
+}
+
+void AppSettings::setLyricsSmartFilterEnabled(bool enabled)
+{
+    if (lyricsSmartFilterEnabled() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kLyricsSmartFilterEnabled), enabled);
+    emit changed(QLatin1String(kLyricsSmartFilterEnabled));
+}
+
+QStringList AppSettings::lyricsFilterKeys() const
+{
+    const QVariant raw = m_settings.value(QLatin1String(kLyricsFilterKeys));
+    if (!raw.isValid()) {
+        return LyricsFilter::defaultKeywords();
+    }
+    return raw.toStringList();
+}
+
+void AppSettings::setLyricsFilterKeys(const QStringList &keys)
+{
+    if (lyricsFilterKeys() == keys) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kLyricsFilterKeys), keys);
+    emit changed(QLatin1String(kLyricsFilterKeys));
+}
+
+bool AppSettings::preferBilingualLyrics() const
+{
+    return m_settings.value(QLatin1String(kPreferBilingualLyrics), true).toBool();
+}
+
+void AppSettings::setPreferBilingualLyrics(bool enabled)
+{
+    if (preferBilingualLyrics() == enabled) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kPreferBilingualLyrics), enabled);
+    emit changed(QLatin1String(kPreferBilingualLyrics));
 }
 
 } // namespace lyricsqt

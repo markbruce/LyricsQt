@@ -55,6 +55,19 @@ public:
     void addNoSearchingTrackId(const QString &trackId);
     bool isNoSearchingTrackId(const QString &trackId) const;
 
+    bool lyricsFilterEnabled() const;
+    void setLyricsFilterEnabled(bool enabled);
+
+    bool lyricsSmartFilterEnabled() const;
+    void setLyricsSmartFilterEnabled(bool enabled);
+
+    /// User/keyword filter patterns. Empty setting → LyricsFilter::defaultKeywords().
+    QStringList lyricsFilterKeys() const;
+    void setLyricsFilterKeys(const QStringList &keys);
+
+    bool preferBilingualLyrics() const;
+    void setPreferBilingualLyrics(bool enabled);
+
 signals:
     void changed(const QString &key);
 

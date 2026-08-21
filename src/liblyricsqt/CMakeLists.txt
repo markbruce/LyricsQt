@@ -4,6 +4,7 @@ add_library(lyricsqt
   lyrics/LyricsDocument.cpp
   lyrics/LrcParser.cpp
   lyrics/LyricsSession.cpp
+  lyrics/LyricsFilter.cpp
   lyrics/QualityScorer.cpp
   store/LyricsStore.cpp
   controller/LyricsController.cpp
@@ -19,6 +20,7 @@ add_library(lyricsqt
   include/lyricsqt/LyricsDocument.h
   include/lyricsqt/LrcParser.h
   include/lyricsqt/LyricsSession.h
+  include/lyricsqt/LyricsFilter.h
   include/lyricsqt/LyricsStore.h
   include/lyricsqt/LyricsController.h
   include/lyricsqt/QualityScorer.h

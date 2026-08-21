@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
     }
 
     DesktopLyricsWindow desktopWindow(&settings, &session, &player);
-    LyricsHudWindow hudWindow(&session, &player, &store, &providers);
+    LyricsHudWindow hudWindow(&session, &player, &store, &providers, &settings);
     TrayController tray(&settings, &session);
     SearchLyricsDialog searchDialog(&player, &session, &store, &providers, &settings);
 

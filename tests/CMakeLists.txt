@@ -19,3 +19,7 @@ add_test(NAME LyricsStore COMMAND test_lyrics_store)
 add_executable(test_quality_scorer test_quality_scorer.cpp)
 target_link_libraries(test_quality_scorer PRIVATE LyricsQt::lyricsqt Qt6::Test)
 add_test(NAME QualityScorer COMMAND test_quality_scorer)
+
+add_executable(test_lyrics_filter test_lyrics_filter.cpp)
+target_link_libraries(test_lyrics_filter PRIVATE LyricsQt::lyricsqt Qt6::Test)
+add_test(NAME LyricsFilter COMMAND test_lyrics_filter)

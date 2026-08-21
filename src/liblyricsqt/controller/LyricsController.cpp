@@ -2,6 +2,7 @@
 
 #include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LyricsDocument.h>
+#include <lyricsqt/LyricsFilter.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
 #include <lyricsqt/PlayerService.h>
@@ -65,11 +66,12 @@ void LyricsController::onTrackChanged(const TrackInfo &track)
                .arg(track.title, track.artist);
 
     if (auto doc = m_store->loadLocal(track)) {
-        m_session->setLyrics(*doc);
+        const LyricsDocument filtered = LyricsFilter::apply(*doc, m_settings);
+        m_session->setLyrics(filtered);
         qDebug().noquote()
             << QStringLiteral("[LyricsController] applied local lyrics lines=%1 path=%2")
-                   .arg(doc->lines.size())
-                   .arg(doc->localPath);
+                   .arg(filtered.lines.size())
+                   .arg(filtered.localPath);
     } else {
         qDebug().noquote() << QStringLiteral("[LyricsController] no local lyrics yet");
         const bool ignored = m_settings && m_settings->isNoSearchingTrackId(track.id);
@@ -99,7 +101,7 @@ void LyricsController::onRemoteLyrics(const TrackInfo &track, const LyricsDocume
         return;
     }
 
-    LyricsDocument applied = doc;
+    LyricsDocument applied = LyricsFilter::apply(doc, m_settings);
     const QUrl saved = m_store->save(track, applied);
     if (saved.isLocalFile()) {
         applied.localPath = saved.toLocalFile();

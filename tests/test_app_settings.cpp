@@ -28,6 +28,10 @@ private slots:
                  (QStringList{QStringLiteral("lrclib"), QStringLiteral("netease"),
                               QStringLiteral("qq"), QStringLiteral("kugou")}));
         QCOMPARE(fresh.noSearchingTrackIds(), QStringList());
+        QVERIFY(fresh.lyricsFilterEnabled());
+        QVERIFY(fresh.lyricsSmartFilterEnabled());
+        QVERIFY(!fresh.lyricsFilterKeys().isEmpty());
+        QVERIFY(fresh.preferBilingualLyrics());
     }
 
     void roundtrip_offset()
@@ -86,6 +90,26 @@ private slots:
         fresh.addNoSearchingTrackId(QStringLiteral("track-2"));
         QCOMPARE(fresh.noSearchingTrackIds(),
                  (QStringList{QStringLiteral("track-1"), QStringLiteral("track-2")}));
+    }
+
+    void roundtrip_filter_and_bilingual()
+    {
+        lyricsqt::AppSettings settings(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsFilter"));
+        QSettings raw(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsFilter"));
+        raw.clear();
+        raw.sync();
+
+        lyricsqt::AppSettings fresh(QStringLiteral("lyricsqt-test"), QStringLiteral("AppSettingsFilter"));
+        fresh.setLyricsFilterEnabled(false);
+        fresh.setLyricsSmartFilterEnabled(false);
+        fresh.setPreferBilingualLyrics(false);
+        const QStringList keys{QStringLiteral("作词"), QStringLiteral("/^\\.$")};
+        fresh.setLyricsFilterKeys(keys);
+
+        QCOMPARE(fresh.lyricsFilterEnabled(), false);
+        QCOMPARE(fresh.lyricsSmartFilterEnabled(), false);
+        QCOMPARE(fresh.preferBilingualLyrics(), false);
+        QCOMPARE(fresh.lyricsFilterKeys(), keys);
     }
 };
 

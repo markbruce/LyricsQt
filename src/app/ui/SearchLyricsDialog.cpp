@@ -1,6 +1,7 @@
 #include "SearchLyricsDialog.h"
 
 #include <lyricsqt/AppSettings.h>
+#include <lyricsqt/LyricsFilter.h>
 #include <lyricsqt/LyricsSession.h>
 #include <lyricsqt/LyricsStore.h>
 #include <lyricsqt/PlayerService.h>
@@ -155,9 +156,10 @@ void SearchLyricsDialog::onApplyClicked()
         m_settings->setNoSearchingTrackIds(ids);
     }
 
-    const lyricsqt::LyricsDocument &doc = m_results.at(row);
-    m_session->setLyrics(doc);
-    m_store->save(current, doc);
+    const lyricsqt::LyricsDocument filtered =
+        lyricsqt::LyricsFilter::apply(m_results.at(row), m_settings);
+    m_session->setLyrics(filtered);
+    m_store->save(current, filtered);
     accept();
 }
 
