@@ -10,6 +10,7 @@ namespace lyricsqt {
 
 class AppSettings;
 class MprisPlayerBackend;
+class QqMusicCdpPositionSource;
 
 class PlayerService : public QObject
 {
@@ -45,14 +46,18 @@ private:
     void onBackendPlaybackStatusChanged(const QString &status);
     void onBackendPositionChanged(double positionSec);
     void updatePollingTimer();
+    void updateQqMusicCdpBridge();
+    bool shouldUseQqMusicCdp() const;
 
 private slots:
     void onNameOwnerChanged(const QString &name, const QString &oldOwner, const QString &newOwner);
+    void onQqCdpPositionUpdated(double positionSec, double durationSec, bool paused);
 
 private:
     AppSettings *m_settings = nullptr;
     QString m_preferredPlayerId;
     MprisPlayerBackend *m_backend = nullptr;
+    QqMusicCdpPositionSource *m_qqCdp = nullptr;
     QTimer m_positionTimer;
     QTimer m_rediscoverTimer;
     bool m_playing = false;

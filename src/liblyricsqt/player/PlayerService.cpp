@@ -1,6 +1,7 @@
 #include <lyricsqt/PlayerService.h>
 
 #include "MprisPlayerBackend.h"
+#include "QqMusicCdpPositionSource.h"
 
 #include <lyricsqt/AppSettings.h>
 
@@ -59,6 +60,7 @@ PlayerService::PlayerService(AppSettings *settings, QObject *parent)
     : QObject(parent)
     , m_settings(settings)
     , m_backend(new MprisPlayerBackend(this))
+    , m_qqCdp(new QqMusicCdpPositionSource(this))
 {
     if (m_settings) {
         m_preferredPlayerId = m_settings->preferredPlayerId();
@@ -81,6 +83,8 @@ PlayerService::PlayerService(AppSettings *settings, QObject *parent)
             this, &PlayerService::onBackendPlaybackStatusChanged);
     connect(m_backend, &MprisPlayerBackend::positionChanged,
             this, &PlayerService::onBackendPositionChanged);
+    connect(m_qqCdp, &QqMusicCdpPositionSource::positionUpdated,
+            this, &PlayerService::onQqCdpPositionUpdated);
 
     QDBusConnection::sessionBus().connect(
         QStringLiteral("org.freedesktop.DBus"),
@@ -126,6 +130,9 @@ bool PlayerService::isPlaying() const
 
 double PlayerService::positionSec() const
 {
+    if (m_qqCdp && m_qqCdp->hasFreshPosition()) {
+        return m_qqCdp->positionSec();
+    }
     return m_backend->positionSec();
 }
 
@@ -160,6 +167,7 @@ void PlayerService::selectAndConnectPlayer()
             emit activePlayerChanged(QString());
             updatePollingTimer();
         }
+        updateQqMusicCdpBridge();
         return;
     }
 
@@ -172,6 +180,7 @@ void PlayerService::selectAndConnectPlayer()
         m_backend->connectToService(chosen);
         emit activePlayerChanged(chosen);
     }
+    updateQqMusicCdpBridge();
 }
 
 QString PlayerService::choosePlayer(const QStringList &players) const
@@ -245,7 +254,31 @@ void PlayerService::onBackendPlaybackStatusChanged(const QString &status)
 
 void PlayerService::onBackendPositionChanged(double positionSec)
 {
+    // QQ Music Chromium MPRIS Position is stuck at 0; prefer CDP audio clock.
+    if (m_qqCdp && m_qqCdp->hasFreshPosition()) {
+        return;
+    }
     emit positionChanged(positionSec);
+}
+
+void PlayerService::onQqCdpPositionUpdated(double positionSec, double, bool)
+{
+    emit positionChanged(positionSec);
+}
+
+bool PlayerService::shouldUseQqMusicCdp() const
+{
+    const QString id = m_backend->serviceName();
+    // Official Linux QQ Music registers as Chromium MPRIS with Position=0.
+    return id.contains(QLatin1String("chromium"), Qt::CaseInsensitive);
+}
+
+void PlayerService::updateQqMusicCdpBridge()
+{
+    if (!m_qqCdp) {
+        return;
+    }
+    m_qqCdp->setEnabled(shouldUseQqMusicCdp());
 }
 
 void PlayerService::updatePollingTimer()
@@ -257,6 +290,7 @@ void PlayerService::updatePollingTimer()
     } else {
         m_positionTimer.stop();
     }
+    updateQqMusicCdpBridge();
 }
 
 void PlayerService::onNameOwnerChanged(const QString &name, const QString &oldOwner, const QString &newOwner)

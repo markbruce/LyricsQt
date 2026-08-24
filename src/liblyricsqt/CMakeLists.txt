@@ -14,6 +14,7 @@ add_library(lyricsqt
   providers/QQMusicProvider.cpp
   providers/KugouProvider.cpp
   player/MprisPlayerBackend.cpp
+  player/QqMusicCdpPositionSource.cpp
   player/PlayerService.cpp
   export/ExportServer.cpp
   export/ExportAdaptor.cpp
@@ -37,6 +38,7 @@ add_library(lyricsqt
   include/lyricsqt/PlayerService.h
   include/lyricsqt/ExportServer.h
   player/MprisPlayerBackend.h
+  player/QqMusicCdpPositionSource.h
 )
 add_library(LyricsQt::lyricsqt ALIAS lyricsqt)
 
@@ -48,9 +50,19 @@ target_include_directories(lyricsqt
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+target_compile_definitions(lyricsqt
+  PRIVATE
+    LYRICSQT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_link_libraries(lyricsqt
   PUBLIC
     Qt6::Core
     Qt6::DBus
     Qt6::Network
+)
+
+install(PROGRAMS
+  ${CMAKE_SOURCE_DIR}/scripts/qqmusic_cdp_position.py
+  DESTINATION share/lyricsqt
 )
