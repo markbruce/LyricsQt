@@ -23,6 +23,9 @@ private slots:
         QVERIFY(!fresh.lyricsSavingPath().isEmpty());
         QCOMPARE(fresh.desktopPositionXFactor(), 0.5);
         QCOMPARE(fresh.desktopPositionYFactor(), 0.5);
+        QCOMPARE(fresh.desktopLyricsWidth(), 720);
+        QCOMPARE(fresh.desktopLyricsFontPt(), 30);
+        QCOMPARE(fresh.desktopLyricsLocked(), false);
         QCOMPARE(fresh.disableLyricsWhenPaused(), false);
         QCOMPARE(fresh.enabledProviderIds(),
                  (QStringList{QStringLiteral("lrclib"), QStringLiteral("netease"),
@@ -61,6 +64,14 @@ private slots:
         fresh.setDesktopPositionYFactor(0.75);
         QCOMPARE(fresh.desktopPositionXFactor(), 0.25);
         QCOMPARE(fresh.desktopPositionYFactor(), 0.75);
+        fresh.setDesktopLyricsWidth(900);
+        QCOMPARE(fresh.desktopLyricsWidth(), 900);
+        fresh.setDesktopLyricsWidth(100); // clamped to minimum
+        QCOMPARE(fresh.desktopLyricsWidth(), 360);
+        fresh.setDesktopLyricsFontPt(40);
+        QCOMPARE(fresh.desktopLyricsFontPt(), 40);
+        fresh.setDesktopLyricsLocked(true);
+        QCOMPARE(fresh.desktopLyricsLocked(), true);
     }
 
     void roundtrip_enabled_providers()

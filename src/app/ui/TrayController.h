@@ -33,6 +33,7 @@ private:
     void updateTooltip();
     void toggleDesktopLyrics();
     void toggleTrayLine();
+    void toggleDesktopLock();
     void adjustOffset(int deltaMs);
 
     lyricsqt::AppSettings *m_settings = nullptr;
@@ -41,4 +42,5 @@ private:
     QMenu *m_menu = nullptr;
     QAction *m_toggleDesktopAction = nullptr;
     QAction *m_toggleTrayLineAction = nullptr;
+    QAction *m_lockDesktopAction = nullptr;
 };

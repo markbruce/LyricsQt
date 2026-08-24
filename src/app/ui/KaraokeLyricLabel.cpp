@@ -2,6 +2,7 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QSizePolicy>
 #include <QtMath>
 
 KaraokeLyricLabel::KaraokeLyricLabel(QWidget *parent)
@@ -9,7 +10,7 @@ KaraokeLyricLabel::KaraokeLyricLabel(QWidget *parent)
 {
     m_font = QFont(QStringLiteral("Sans Serif"), 28, QFont::Bold);
     setAttribute(Qt::WA_TranslucentBackground);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
 }
 
 void KaraokeLyricLabel::setText(const QString &text)
@@ -66,12 +67,12 @@ void KaraokeLyricLabel::setLyricFont(const QFont &font)
 
 QSize KaraokeLyricLabel::sizeHint() const
 {
-    return m_textSize.expandedTo(QSize(40, 36));
+    return QSize(0, qMax(36, m_textSize.height()));
 }
 
 QSize KaraokeLyricLabel::minimumSizeHint() const
 {
-    return sizeHint();
+    return QSize(0, qMax(28, m_textSize.height()));
 }
 
 void KaraokeLyricLabel::updateMetrics()
@@ -94,8 +95,22 @@ void KaraokeLyricLabel::paintEvent(QPaintEvent *)
     p.setFont(m_font);
 
     const QFontMetrics fm(m_font);
-    const QRect textRect = rect().adjusted(2, 2, -2, -2);
+    const QRect area = rect().adjusted(2, 2, -2, -2);
     const int flags = Qt::AlignCenter | Qt::TextSingleLine;
+
+    // Progress must follow the centered glyphs, not the full panel width —
+    // otherwise the wipe spends time on empty left padding and feels delayed.
+    const int textW = fm.horizontalAdvance(m_text);
+    const int textH = fm.height();
+    QRect glyphRect(
+        area.x() + (area.width() - textW) / 2,
+        area.y() + (area.height() - textH) / 2,
+        qMax(1, textW),
+        qMax(1, textH));
+    glyphRect = glyphRect.intersected(area);
+    if (glyphRect.width() <= 0) {
+        glyphRect = area;
+    }
 
     // Dark outline / stroke for readability (QQ Music style).
     const int outline = qMax(2, fm.height() / 14);
@@ -108,22 +123,21 @@ void KaraokeLyricLabel::paintEvent(QPaintEvent *)
             if (dx * dx + dy * dy > outline * outline + 1) {
                 continue;
             }
-            p.drawText(textRect.translated(dx, dy), flags, m_text);
+            p.drawText(area.translated(dx, dy), flags, m_text);
         }
     }
 
-    // Unplayed (blue) full text, then clip left→right with played (yellow).
+    // Unplayed (blue) full text, then clip left→right over the glyph box only.
     p.setPen(m_unplayed);
-    p.drawText(textRect, flags, m_text);
+    p.drawText(area, flags, m_text);
 
     if (m_progress > 0.001) {
-        const int splitX = textRect.left()
-            + static_cast<int>(qRound(textRect.width() * m_progress));
+        const int playedW = static_cast<int>(qRound(glyphRect.width() * m_progress));
         p.save();
-        p.setClipRect(QRect(textRect.left(), textRect.top(),
-                            qMax(0, splitX - textRect.left()), textRect.height()));
+        p.setClipRect(QRect(glyphRect.left(), area.top(),
+                            qMax(0, playedW), area.height()));
         p.setPen(m_played);
-        p.drawText(textRect, flags, m_text);
+        p.drawText(area, flags, m_text);
         p.restore();
     }
 }

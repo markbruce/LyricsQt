@@ -43,6 +43,18 @@ public:
     double desktopPositionYFactor() const;
     void setDesktopPositionYFactor(double factor);
 
+    /// Desktop lyrics panel width in pixels (edge-drag resize).
+    int desktopLyricsWidth() const;
+    void setDesktopLyricsWidth(int width);
+
+    /// Primary lyric font point size (secondary is derived).
+    int desktopLyricsFontPt() const;
+    void setDesktopLyricsFontPt(int pointSize);
+
+    /// When locked, desktop lyrics are click-through except the lock icon.
+    bool desktopLyricsLocked() const;
+    void setDesktopLyricsLocked(bool locked);
+
     bool disableLyricsWhenPaused() const;
     void setDisableLyricsWhenPaused(bool enabled);
 

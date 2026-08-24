@@ -31,6 +31,12 @@ TrayController::TrayController(lyricsqt::AppSettings *settings,
     m_toggleDesktopAction->setChecked(m_settings->desktopLyricsEnabled());
     connect(m_toggleDesktopAction, &QAction::triggered, this, &TrayController::toggleDesktopLyrics);
 
+    m_lockDesktopAction = m_menu->addAction(QStringLiteral("Lock Desktop Lyrics"));
+    m_lockDesktopAction->setCheckable(true);
+    m_lockDesktopAction->setChecked(m_settings->desktopLyricsLocked());
+    m_lockDesktopAction->setEnabled(m_settings->desktopLyricsEnabled());
+    connect(m_lockDesktopAction, &QAction::triggered, this, &TrayController::toggleDesktopLock);
+
     m_toggleTrayLineAction = m_menu->addAction(QStringLiteral("Toggle Tray Line"));
     m_toggleTrayLineAction->setCheckable(true);
     m_toggleTrayLineAction->setChecked(m_settings->menuBarLyricsEnabled());
@@ -91,6 +97,11 @@ void TrayController::onSettingsChanged(const QString &key)
 {
     if (key == QLatin1String("DesktopLyricsEnabled") && m_toggleDesktopAction) {
         m_toggleDesktopAction->setChecked(m_settings->desktopLyricsEnabled());
+        if (m_lockDesktopAction) {
+            m_lockDesktopAction->setEnabled(m_settings->desktopLyricsEnabled());
+        }
+    } else if (key == QLatin1String("DesktopLyricsLocked") && m_lockDesktopAction) {
+        m_lockDesktopAction->setChecked(m_settings->desktopLyricsLocked());
     } else if (key == QLatin1String("MenuBarLyricsEnabled")) {
         if (m_toggleTrayLineAction) {
             m_toggleTrayLineAction->setChecked(m_settings->menuBarLyricsEnabled());
@@ -124,6 +135,11 @@ void TrayController::toggleDesktopLyrics()
 void TrayController::toggleTrayLine()
 {
     m_settings->setMenuBarLyricsEnabled(m_toggleTrayLineAction->isChecked());
+}
+
+void TrayController::toggleDesktopLock()
+{
+    m_settings->setDesktopLyricsLocked(m_lockDesktopAction->isChecked());
 }
 
 void TrayController::adjustOffset(int deltaMs)

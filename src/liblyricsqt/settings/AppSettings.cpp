@@ -18,7 +18,16 @@ constexpr auto kLoadLyricsBesideTrack = "LoadLyricsBesideTrack";
 constexpr auto kLyricsSavingPath = "LyricsSavingPath";
 constexpr auto kDesktopPositionXFactor = "DesktopLyricsXPositionFactor";
 constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
+constexpr auto kDesktopLyricsWidth = "DesktopLyricsWidth";
+constexpr auto kDesktopLyricsFontPt = "DesktopLyricsFontPt";
+constexpr auto kDesktopLyricsLocked = "DesktopLyricsLocked";
 constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
+constexpr int kDefaultDesktopLyricsWidth = 720;
+constexpr int kMinDesktopLyricsWidth = 360;
+constexpr int kMaxDesktopLyricsWidth = 2400;
+constexpr int kDefaultDesktopLyricsFontPt = 30;
+constexpr int kMinDesktopLyricsFontPt = 14;
+constexpr int kMaxDesktopLyricsFontPt = 72;
 constexpr auto kEnabledProviderIds = "EnabledProviderIds";
 constexpr auto kNoSearchingTrackIds = "NoSearchingTrackIds";
 constexpr auto kLyricsFilterEnabled = "LyricsFilterEnabled";
@@ -194,6 +203,52 @@ void AppSettings::setDesktopPositionYFactor(double factor)
     }
     m_settings.setValue(QLatin1String(kDesktopPositionYFactor), clamped);
     emit changed(QLatin1String(kDesktopPositionYFactor));
+}
+
+int AppSettings::desktopLyricsWidth() const
+{
+    const int width = m_settings.value(QLatin1String(kDesktopLyricsWidth), kDefaultDesktopLyricsWidth).toInt();
+    return qBound(kMinDesktopLyricsWidth, width, kMaxDesktopLyricsWidth);
+}
+
+void AppSettings::setDesktopLyricsWidth(int width)
+{
+    const int clamped = qBound(kMinDesktopLyricsWidth, width, kMaxDesktopLyricsWidth);
+    if (desktopLyricsWidth() == clamped) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsWidth), clamped);
+    emit changed(QLatin1String(kDesktopLyricsWidth));
+}
+
+int AppSettings::desktopLyricsFontPt() const
+{
+    const int pt = m_settings.value(QLatin1String(kDesktopLyricsFontPt), kDefaultDesktopLyricsFontPt).toInt();
+    return qBound(kMinDesktopLyricsFontPt, pt, kMaxDesktopLyricsFontPt);
+}
+
+void AppSettings::setDesktopLyricsFontPt(int pointSize)
+{
+    const int clamped = qBound(kMinDesktopLyricsFontPt, pointSize, kMaxDesktopLyricsFontPt);
+    if (desktopLyricsFontPt() == clamped) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsFontPt), clamped);
+    emit changed(QLatin1String(kDesktopLyricsFontPt));
+}
+
+bool AppSettings::desktopLyricsLocked() const
+{
+    return m_settings.value(QLatin1String(kDesktopLyricsLocked), false).toBool();
+}
+
+void AppSettings::setDesktopLyricsLocked(bool locked)
+{
+    if (desktopLyricsLocked() == locked) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsLocked), locked);
+    emit changed(QLatin1String(kDesktopLyricsLocked));
 }
 
 bool AppSettings::disableLyricsWhenPaused() const

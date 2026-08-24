@@ -5,6 +5,7 @@
 class QCheckBox;
 class QLineEdit;
 class QListWidget;
+class QSpinBox;
 
 namespace lyricsqt {
 class AppSettings;
@@ -50,6 +51,7 @@ private:
     QCheckBox *m_trayLyricsCheck = nullptr;
     QCheckBox *m_bilingualCheck = nullptr;
     QCheckBox *m_disableWhenPausedCheck = nullptr;
+    QSpinBox *m_desktopFontSpin = nullptr;
 
     // Filter
     QCheckBox *m_filterEnabledCheck = nullptr;

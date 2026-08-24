@@ -15,6 +15,7 @@
 #include <QListWidgetItem>
 #include <QPushButton>
 #include <QShowEvent>
+#include <QSpinBox>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
@@ -152,9 +153,27 @@ QWidget *PreferencesDialog::buildDisplayTab()
         }
     });
 
+    m_desktopFontSpin = new QSpinBox(page);
+    m_desktopFontSpin->setRange(14, 72);
+    m_desktopFontSpin->setSuffix(QStringLiteral(" pt"));
+    connect(m_desktopFontSpin, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        if (!m_loading) {
+            m_settings->setDesktopLyricsFontPt(value);
+        }
+    });
+
+    auto *fontRow = new QWidget(page);
+    auto *fontLayout = new QHBoxLayout(fontRow);
+    fontLayout->setContentsMargins(0, 0, 0, 0);
+    fontLayout->addWidget(new QLabel(QStringLiteral("Desktop lyrics font size"), page));
+    fontLayout->addStretch(1);
+    fontLayout->addWidget(m_desktopFontSpin);
+
     auto *positionNote = new QLabel(
-        QStringLiteral("Drag the desktop lyrics window to change position "
-                       "(saved as screen factors). Fonts/colors: not configured yet."),
+        QStringLiteral("Unlocked: hover for A- / lock / A+ (centered). "
+                       "Drag to move, drag edges to resize, scroll or A± for font size. "
+                       "Lock makes lyrics click-through; unlock from the tray menu "
+                       "(\"Lock Desktop Lyrics\"). Gray background only while unlocked and hovering."),
         page);
     positionNote->setWordWrap(true);
     positionNote->setStyleSheet(QStringLiteral("color: palette(mid);"));
@@ -163,6 +182,7 @@ QWidget *PreferencesDialog::buildDisplayTab()
     layout->addWidget(m_trayLyricsCheck);
     layout->addWidget(m_bilingualCheck);
     layout->addWidget(m_disableWhenPausedCheck);
+    layout->addWidget(fontRow);
     layout->addSpacing(12);
     layout->addWidget(positionNote);
     layout->addStretch(1);
@@ -265,6 +285,10 @@ void PreferencesDialog::loadFromSettings()
     setCheckSilent(m_trayLyricsCheck, m_settings->menuBarLyricsEnabled());
     setCheckSilent(m_bilingualCheck, m_settings->preferBilingualLyrics());
     setCheckSilent(m_disableWhenPausedCheck, m_settings->disableLyricsWhenPaused());
+    if (m_desktopFontSpin) {
+        const QSignalBlocker blocker(m_desktopFontSpin);
+        m_desktopFontSpin->setValue(m_settings->desktopLyricsFontPt());
+    }
 
     setCheckSilent(m_filterEnabledCheck, m_settings->lyricsFilterEnabled());
     setCheckSilent(m_smartFilterCheck, m_settings->lyricsSmartFilterEnabled());
