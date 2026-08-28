@@ -2,6 +2,8 @@
 
 #include <lyricsqt/LyricsFilter.h>
 
+#include <cctype>
+
 #include <QStandardPaths>
 #include <QtGlobal>
 
@@ -21,6 +23,10 @@ constexpr auto kDesktopPositionYFactor = "DesktopLyricsYPositionFactor";
 constexpr auto kDesktopLyricsWidth = "DesktopLyricsWidth";
 constexpr auto kDesktopLyricsFontPt = "DesktopLyricsFontPt";
 constexpr auto kDesktopLyricsLocked = "DesktopLyricsLocked";
+constexpr auto kDesktopLyricsUnplayedColor = "DesktopLyricsUnplayedColor";
+constexpr auto kDesktopLyricsPlayedColor = "DesktopLyricsPlayedColor";
+constexpr auto kDesktopLyricsOutlineColor = "DesktopLyricsOutlineColor";
+constexpr auto kDesktopLyricsTextOpacity = "DesktopLyricsTextOpacity";
 constexpr auto kDisableLyricsWhenPaused = "DisableLyricsWhenPaused";
 constexpr int kDefaultDesktopLyricsWidth = 720;
 constexpr int kMinDesktopLyricsWidth = 360;
@@ -28,6 +34,35 @@ constexpr int kMaxDesktopLyricsWidth = 2400;
 constexpr int kDefaultDesktopLyricsFontPt = 30;
 constexpr int kMinDesktopLyricsFontPt = 14;
 constexpr int kMaxDesktopLyricsFontPt = 72;
+constexpr int kDefaultDesktopLyricsTextOpacity = 100;
+constexpr int kMinDesktopLyricsTextOpacity = 10;
+constexpr int kMaxDesktopLyricsTextOpacity = 100;
+
+bool looksLikeCssColor(const QString &value)
+{
+    if (value.isEmpty() || !value.startsWith(QLatin1Char('#'))) {
+        return false;
+    }
+    const int n = value.size() - 1;
+    if (n != 6 && n != 8) {
+        return false;
+    }
+    for (int i = 1; i < value.size(); ++i) {
+        if (!isxdigit(value[i].toLatin1())) {
+            return false;
+        }
+    }
+    return true;
+}
+
+QString sanitizeCssColor(const QString &value, const QString &fallback)
+{
+    const QString trimmed = value.trimmed();
+    if (looksLikeCssColor(trimmed)) {
+        return trimmed.toLower();
+    }
+    return fallback;
+}
 constexpr auto kEnabledProviderIds = "EnabledProviderIds";
 constexpr auto kNoSearchingTrackIds = "NoSearchingTrackIds";
 constexpr auto kLyricsFilterEnabled = "LyricsFilterEnabled";
@@ -70,6 +105,21 @@ QStringList AppSettings::defaultProviderIds()
         QStringLiteral("qq"),
         QStringLiteral("kugou"),
     };
+}
+
+QString AppSettings::defaultDesktopLyricsUnplayedColor()
+{
+    return QStringLiteral("#3d9eff");
+}
+
+QString AppSettings::defaultDesktopLyricsPlayedColor()
+{
+    return QStringLiteral("#ffe03d");
+}
+
+QString AppSettings::defaultDesktopLyricsOutlineColor()
+{
+    return QStringLiteral("#e6000000");
 }
 
 bool AppSettings::desktopLyricsEnabled() const
@@ -249,6 +299,86 @@ void AppSettings::setDesktopLyricsLocked(bool locked)
     }
     m_settings.setValue(QLatin1String(kDesktopLyricsLocked), locked);
     emit changed(QLatin1String(kDesktopLyricsLocked));
+}
+
+QString AppSettings::desktopLyricsUnplayedColor() const
+{
+    return sanitizeCssColor(
+        m_settings.value(QLatin1String(kDesktopLyricsUnplayedColor)).toString(),
+        defaultDesktopLyricsUnplayedColor());
+}
+
+void AppSettings::setDesktopLyricsUnplayedColor(const QString &color)
+{
+    const QString sanitized = sanitizeCssColor(color, defaultDesktopLyricsUnplayedColor());
+    if (desktopLyricsUnplayedColor() == sanitized
+        && m_settings.contains(QLatin1String(kDesktopLyricsUnplayedColor))) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsUnplayedColor), sanitized);
+    emit changed(QLatin1String(kDesktopLyricsUnplayedColor));
+}
+
+QString AppSettings::desktopLyricsPlayedColor() const
+{
+    return sanitizeCssColor(
+        m_settings.value(QLatin1String(kDesktopLyricsPlayedColor)).toString(),
+        defaultDesktopLyricsPlayedColor());
+}
+
+void AppSettings::setDesktopLyricsPlayedColor(const QString &color)
+{
+    const QString sanitized = sanitizeCssColor(color, defaultDesktopLyricsPlayedColor());
+    if (desktopLyricsPlayedColor() == sanitized
+        && m_settings.contains(QLatin1String(kDesktopLyricsPlayedColor))) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsPlayedColor), sanitized);
+    emit changed(QLatin1String(kDesktopLyricsPlayedColor));
+}
+
+QString AppSettings::desktopLyricsOutlineColor() const
+{
+    const QString raw = m_settings.value(QLatin1String(kDesktopLyricsOutlineColor)).toString().trimmed();
+    if (raw.compare(QLatin1String("none"), Qt::CaseInsensitive) == 0) {
+        return QStringLiteral("none");
+    }
+    return sanitizeCssColor(raw, defaultDesktopLyricsOutlineColor());
+}
+
+void AppSettings::setDesktopLyricsOutlineColor(const QString &color)
+{
+    const QString trimmed = color.trimmed();
+    QString sanitized;
+    if (trimmed.compare(QLatin1String("none"), Qt::CaseInsensitive) == 0) {
+        sanitized = QStringLiteral("none");
+    } else {
+        sanitized = sanitizeCssColor(trimmed, defaultDesktopLyricsOutlineColor());
+    }
+    if (desktopLyricsOutlineColor() == sanitized
+        && m_settings.contains(QLatin1String(kDesktopLyricsOutlineColor))) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsOutlineColor), sanitized);
+    emit changed(QLatin1String(kDesktopLyricsOutlineColor));
+}
+
+int AppSettings::desktopLyricsTextOpacity() const
+{
+    const int value = m_settings.value(QLatin1String(kDesktopLyricsTextOpacity),
+                                       kDefaultDesktopLyricsTextOpacity)
+                          .toInt();
+    return qBound(kMinDesktopLyricsTextOpacity, value, kMaxDesktopLyricsTextOpacity);
+}
+
+void AppSettings::setDesktopLyricsTextOpacity(int percent)
+{
+    const int clamped = qBound(kMinDesktopLyricsTextOpacity, percent, kMaxDesktopLyricsTextOpacity);
+    if (desktopLyricsTextOpacity() == clamped) {
+        return;
+    }
+    m_settings.setValue(QLatin1String(kDesktopLyricsTextOpacity), clamped);
+    emit changed(QLatin1String(kDesktopLyricsTextOpacity));
 }
 
 bool AppSettings::disableLyricsWhenPaused() const

@@ -15,6 +15,9 @@ public:
     explicit AppSettings(const QString &organization, const QString &application, QObject *parent = nullptr);
 
     static QStringList defaultProviderIds();
+    static QString defaultDesktopLyricsUnplayedColor();
+    static QString defaultDesktopLyricsPlayedColor();
+    static QString defaultDesktopLyricsOutlineColor();
 
     bool desktopLyricsEnabled() const;
     void setDesktopLyricsEnabled(bool enabled);
@@ -54,6 +57,20 @@ public:
     /// When locked, desktop lyrics are click-through except the lock icon.
     bool desktopLyricsLocked() const;
     void setDesktopLyricsLocked(bool locked);
+
+    /// CSS hex colors (#RRGGBB or #AARRGGBB) for karaoke painting.
+    QString desktopLyricsUnplayedColor() const;
+    void setDesktopLyricsUnplayedColor(const QString &color);
+
+    QString desktopLyricsPlayedColor() const;
+    void setDesktopLyricsPlayedColor(const QString &color);
+
+    QString desktopLyricsOutlineColor() const;
+    void setDesktopLyricsOutlineColor(const QString &color);
+
+    /// Overall lyric glyph opacity percent (1–100). Multiplies color alphas when painting.
+    int desktopLyricsTextOpacity() const;
+    void setDesktopLyricsTextOpacity(int percent);
 
     bool disableLyricsWhenPaused() const;
     void setDisableLyricsWhenPaused(bool enabled);

@@ -149,8 +149,6 @@ DesktopLyricsWindow::DesktopLyricsWindow(lyricsqt::AppSettings *settings,
     m_primary->setMouseTracking(true);
 
     m_secondary = new KaraokeLyricLabel(this);
-    m_secondary->setUnplayedColor(QColor(0x9B, 0xC9, 0xFF));
-    m_secondary->setPlayedColor(QColor(0x9B, 0xC9, 0xFF));
     m_secondary->setProgress(0.0);
     m_secondary->setMouseTracking(true);
 
@@ -200,6 +198,7 @@ DesktopLyricsWindow::DesktopLyricsWindow(lyricsqt::AppSettings *settings,
     setMaximumWidth(kMaxPanelWidth);
     setMinimumHeight(88);
     applyFontsFromSettings();
+    applyColorsFromSettings();
     applyWidthFromSettings();
     updateHeightToContent();
 
@@ -496,6 +495,11 @@ void DesktopLyricsWindow::onSettingsChanged(const QString &key)
     } else if (key == QLatin1String("DesktopLyricsFontPt")) {
         applyFontsFromSettings();
         updateHeightToContent();
+    } else if (key == QLatin1String("DesktopLyricsUnplayedColor")
+               || key == QLatin1String("DesktopLyricsPlayedColor")
+               || key == QLatin1String("DesktopLyricsOutlineColor")
+               || key == QLatin1String("DesktopLyricsTextOpacity")) {
+        applyColorsFromSettings();
     } else if (key == QLatin1String("DesktopLyricsLocked")) {
         applyLockedState();
     } else if (key == QLatin1String("PreferBilingualLyrics")) {
@@ -631,6 +635,39 @@ void DesktopLyricsWindow::applyFontsFromSettings()
     const int secondaryPt = qMax(12, static_cast<int>(qRound(primaryPt * 0.6)));
     m_primary->setLyricFont(QFont(QStringLiteral("Sans Serif"), primaryPt, QFont::Bold));
     m_secondary->setLyricFont(QFont(QStringLiteral("Sans Serif"), secondaryPt, QFont::DemiBold));
+}
+
+void DesktopLyricsWindow::applyColorsFromSettings()
+{
+    auto withOpacity = [this](const QString &css) -> QColor {
+        if (css.compare(QLatin1String("none"), Qt::CaseInsensitive) == 0) {
+            return QColor(0, 0, 0, 0);
+        }
+        QColor color(css);
+        if (!color.isValid()) {
+            color = QColor(Qt::white);
+        }
+        // If the stored color has no explicit alpha (#RRGGBB), treat as fully opaque base.
+        if (css.size() == 7) {
+            color.setAlpha(255);
+        }
+        const int opacity = m_settings->desktopLyricsTextOpacity();
+        color.setAlpha(qBound(0, qRound(color.alpha() * opacity / 100.0), 255));
+        return color;
+    };
+
+    const QColor unplayed = withOpacity(m_settings->desktopLyricsUnplayedColor());
+    const QColor played = withOpacity(m_settings->desktopLyricsPlayedColor());
+    const QColor outline = withOpacity(m_settings->desktopLyricsOutlineColor());
+
+    m_primary->setUnplayedColor(unplayed);
+    m_primary->setPlayedColor(played);
+    m_primary->setOutlineColor(outline);
+
+    // Next/translation line: same family, slightly softer (reuse unplayed).
+    m_secondary->setUnplayedColor(unplayed);
+    m_secondary->setPlayedColor(unplayed);
+    m_secondary->setOutlineColor(outline);
 }
 
 void DesktopLyricsWindow::applyLockedState()

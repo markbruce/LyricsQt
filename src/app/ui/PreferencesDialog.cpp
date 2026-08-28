@@ -3,8 +3,11 @@
 #include <lyricsqt/AppSettings.h>
 #include <lyricsqt/LyricsFilter.h>
 
+#include <functional>
+
 #include <QAbstractItemView>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QDialogButtonBox>
 #include <QFileDialog>
 #include <QFormLayout>
@@ -169,6 +172,71 @@ QWidget *PreferencesDialog::buildDisplayTab()
     fontLayout->addStretch(1);
     fontLayout->addWidget(m_desktopFontSpin);
 
+    auto makeColorRow = [this, page](const QString &label, QPushButton *&button) {
+        auto *row = new QWidget(page);
+        auto *rowLayout = new QHBoxLayout(row);
+        rowLayout->setContentsMargins(0, 0, 0, 0);
+        rowLayout->addWidget(new QLabel(label, page));
+        rowLayout->addStretch(1);
+        button = new QPushButton(page);
+        button->setFixedSize(88, 28);
+        button->setCursor(Qt::PointingHandCursor);
+        rowLayout->addWidget(button);
+        return row;
+    };
+
+    auto *unplayedRow = makeColorRow(QStringLiteral("Unplayed color"), m_unplayedColorButton);
+    auto *playedRow = makeColorRow(QStringLiteral("Played (karaoke) color"), m_playedColorButton);
+    auto *outlineRow = makeColorRow(QStringLiteral("Outline / border color"), m_outlineColorButton);
+    auto *outlineNoneButton = new QPushButton(QStringLiteral("None"), page);
+    outlineNoneButton->setToolTip(QStringLiteral("No outline / border"));
+    outlineNoneButton->setFixedHeight(28);
+    if (auto *outlineLayout = qobject_cast<QHBoxLayout *>(outlineRow->layout())) {
+        outlineLayout->addWidget(outlineNoneButton);
+    }
+
+    connect(m_unplayedColorButton, &QPushButton::clicked, this, [this]() {
+        pickDesktopColor(m_unplayedColorButton,
+                         QStringLiteral("Unplayed color"),
+                         [this]() { return m_settings->desktopLyricsUnplayedColor(); },
+                         [this](const QString &c) { m_settings->setDesktopLyricsUnplayedColor(c); });
+    });
+    connect(m_playedColorButton, &QPushButton::clicked, this, [this]() {
+        pickDesktopColor(m_playedColorButton,
+                         QStringLiteral("Played color"),
+                         [this]() { return m_settings->desktopLyricsPlayedColor(); },
+                         [this](const QString &c) { m_settings->setDesktopLyricsPlayedColor(c); });
+    });
+    connect(m_outlineColorButton, &QPushButton::clicked, this, [this]() {
+        pickDesktopColor(m_outlineColorButton,
+                         QStringLiteral("Outline color"),
+                         [this]() { return m_settings->desktopLyricsOutlineColor(); },
+                         [this](const QString &c) { m_settings->setDesktopLyricsOutlineColor(c); });
+    });
+    connect(outlineNoneButton, &QPushButton::clicked, this, [this]() {
+        if (m_loading) {
+            return;
+        }
+        m_settings->setDesktopLyricsOutlineColor(QStringLiteral("none"));
+        syncColorButton(m_outlineColorButton, m_settings->desktopLyricsOutlineColor());
+    });
+
+    m_textOpacitySpin = new QSpinBox(page);
+    m_textOpacitySpin->setRange(10, 100);
+    m_textOpacitySpin->setSuffix(QStringLiteral(" %"));
+    connect(m_textOpacitySpin, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+        if (!m_loading) {
+            m_settings->setDesktopLyricsTextOpacity(value);
+        }
+    });
+
+    auto *opacityRow = new QWidget(page);
+    auto *opacityLayout = new QHBoxLayout(opacityRow);
+    opacityLayout->setContentsMargins(0, 0, 0, 0);
+    opacityLayout->addWidget(new QLabel(QStringLiteral("Text opacity"), page));
+    opacityLayout->addStretch(1);
+    opacityLayout->addWidget(m_textOpacitySpin);
+
     auto *positionNote = new QLabel(
         QStringLiteral("Unlocked: hover for A- / lock / A+ (centered). "
                        "Drag to move, drag edges to resize, scroll or A± for font size. "
@@ -183,6 +251,10 @@ QWidget *PreferencesDialog::buildDisplayTab()
     layout->addWidget(m_bilingualCheck);
     layout->addWidget(m_disableWhenPausedCheck);
     layout->addWidget(fontRow);
+    layout->addWidget(unplayedRow);
+    layout->addWidget(playedRow);
+    layout->addWidget(outlineRow);
+    layout->addWidget(opacityRow);
     layout->addSpacing(12);
     layout->addWidget(positionNote);
     layout->addStretch(1);
@@ -288,6 +360,13 @@ void PreferencesDialog::loadFromSettings()
     if (m_desktopFontSpin) {
         const QSignalBlocker blocker(m_desktopFontSpin);
         m_desktopFontSpin->setValue(m_settings->desktopLyricsFontPt());
+    }
+    syncColorButton(m_unplayedColorButton, m_settings->desktopLyricsUnplayedColor());
+    syncColorButton(m_playedColorButton, m_settings->desktopLyricsPlayedColor());
+    syncColorButton(m_outlineColorButton, m_settings->desktopLyricsOutlineColor());
+    if (m_textOpacitySpin) {
+        const QSignalBlocker blocker(m_textOpacitySpin);
+        m_textOpacitySpin->setValue(m_settings->desktopLyricsTextOpacity());
     }
 
     setCheckSilent(m_filterEnabledCheck, m_settings->lyricsFilterEnabled());
@@ -419,3 +498,60 @@ void PreferencesDialog::resetFilterKeywords()
     }
     applyFilterKeys();
 }
+
+void PreferencesDialog::syncColorButton(QPushButton *button, const QString &cssColor)
+{
+    if (!button) {
+        return;
+    }
+    if (cssColor.compare(QLatin1String("none"), Qt::CaseInsensitive) == 0) {
+        button->setText(QStringLiteral("None"));
+        button->setStyleSheet(
+            QStringLiteral("QPushButton { background-color: #f0f0f0; color: #333; border: 1px dashed #888; "
+                           "border-radius: 4px; padding: 2px 6px; }"));
+        return;
+    }
+    QColor color(cssColor);
+    if (!color.isValid()) {
+        color = QColor(Qt::gray);
+    }
+    const QString fg = color.lightness() > 140 ? QStringLiteral("#111111") : QStringLiteral("#ffffff");
+    button->setText(cssColor);
+    button->setStyleSheet(
+        QStringLiteral("QPushButton { background-color: %1; color: %2; border: 1px solid #666; "
+                       "border-radius: 4px; padding: 2px 6px; }")
+            .arg(color.name(QColor::HexArgb), fg));
+}
+
+void PreferencesDialog::pickDesktopColor(QPushButton *button,
+                                         const QString &title,
+                                         const std::function<QString()> &getter,
+                                         const std::function<void(const QString &)> &setter)
+{
+    if (m_loading || !button) {
+        return;
+    }
+    QString current = getter();
+    QColor initial(Qt::black);
+    if (current.compare(QLatin1String("none"), Qt::CaseInsensitive) != 0) {
+        initial = QColor(current);
+    }
+    if (!initial.isValid()) {
+        initial = Qt::black;
+    }
+    const QColor chosen = QColorDialog::getColor(
+        initial, this, title, QColorDialog::ShowAlphaChannel);
+    if (!chosen.isValid()) {
+        return;
+    }
+    // Fully transparent from the picker also means "no outline" for border color.
+    if (chosen.alpha() == 0 && title.contains(QStringLiteral("Outline"), Qt::CaseInsensitive)) {
+        setter(QStringLiteral("none"));
+    } else {
+        const QString css = chosen.alpha() == 255 ? chosen.name(QColor::HexRgb).toLower()
+                                                  : chosen.name(QColor::HexArgb).toLower();
+        setter(css);
+    }
+    syncColorButton(button, getter());
+}
+

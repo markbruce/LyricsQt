@@ -2,9 +2,12 @@
 
 #include <QDialog>
 
+#include <functional>
+
 class QCheckBox;
 class QLineEdit;
 class QListWidget;
+class QPushButton;
 class QSpinBox;
 
 namespace lyricsqt {
@@ -35,6 +38,11 @@ private:
     void addFilterKeyword();
     void removeSelectedFilterKeywords();
     void resetFilterKeywords();
+    void syncColorButton(QPushButton *button, const QString &cssColor);
+    void pickDesktopColor(QPushButton *button,
+                          const QString &title,
+                          const std::function<QString()> &getter,
+                          const std::function<void(const QString &)> &setter);
 
     lyricsqt::AppSettings *m_settings = nullptr;
 
@@ -52,6 +60,10 @@ private:
     QCheckBox *m_bilingualCheck = nullptr;
     QCheckBox *m_disableWhenPausedCheck = nullptr;
     QSpinBox *m_desktopFontSpin = nullptr;
+    QPushButton *m_unplayedColorButton = nullptr;
+    QPushButton *m_playedColorButton = nullptr;
+    QPushButton *m_outlineColorButton = nullptr;
+    QSpinBox *m_textOpacitySpin = nullptr;
 
     // Filter
     QCheckBox *m_filterEnabledCheck = nullptr;

@@ -57,6 +57,7 @@ private:
     void applyWidthFromSettings();
     void saveWidthToSettings();
     void applyFontsFromSettings();
+    void applyColorsFromSettings();
     void applyLockedState();
     void updateHeightToContent();
     void positionLockOverlay();

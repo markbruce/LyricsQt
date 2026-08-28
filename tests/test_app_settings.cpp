@@ -26,6 +26,13 @@ private slots:
         QCOMPARE(fresh.desktopLyricsWidth(), 720);
         QCOMPARE(fresh.desktopLyricsFontPt(), 30);
         QCOMPARE(fresh.desktopLyricsLocked(), false);
+        QCOMPARE(fresh.desktopLyricsUnplayedColor(),
+                 lyricsqt::AppSettings::defaultDesktopLyricsUnplayedColor());
+        QCOMPARE(fresh.desktopLyricsPlayedColor(),
+                 lyricsqt::AppSettings::defaultDesktopLyricsPlayedColor());
+        QCOMPARE(fresh.desktopLyricsOutlineColor(),
+                 lyricsqt::AppSettings::defaultDesktopLyricsOutlineColor());
+        QCOMPARE(fresh.desktopLyricsTextOpacity(), 100);
         QCOMPARE(fresh.disableLyricsWhenPaused(), false);
         QCOMPARE(fresh.enabledProviderIds(),
                  (QStringList{QStringLiteral("lrclib"), QStringLiteral("netease"),
@@ -72,6 +79,18 @@ private slots:
         QCOMPARE(fresh.desktopLyricsFontPt(), 40);
         fresh.setDesktopLyricsLocked(true);
         QCOMPARE(fresh.desktopLyricsLocked(), true);
+        fresh.setDesktopLyricsUnplayedColor(QStringLiteral("#112233"));
+        fresh.setDesktopLyricsPlayedColor(QStringLiteral("#AABBCCDD"));
+        fresh.setDesktopLyricsOutlineColor(QStringLiteral("#010203"));
+        fresh.setDesktopLyricsTextOpacity(55);
+        QCOMPARE(fresh.desktopLyricsUnplayedColor(), QStringLiteral("#112233"));
+        QCOMPARE(fresh.desktopLyricsPlayedColor(), QStringLiteral("#aabbccdd"));
+        QCOMPARE(fresh.desktopLyricsOutlineColor(), QStringLiteral("#010203"));
+        QCOMPARE(fresh.desktopLyricsTextOpacity(), 55);
+        fresh.setDesktopLyricsOutlineColor(QStringLiteral("none"));
+        QCOMPARE(fresh.desktopLyricsOutlineColor(), QStringLiteral("none"));
+        fresh.setDesktopLyricsTextOpacity(3); // clamp to minimum
+        QCOMPARE(fresh.desktopLyricsTextOpacity(), 10);
     }
 
     void roundtrip_enabled_providers()

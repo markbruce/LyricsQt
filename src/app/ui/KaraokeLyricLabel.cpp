@@ -113,17 +113,20 @@ void KaraokeLyricLabel::paintEvent(QPaintEvent *)
     }
 
     // Dark outline / stroke for readability (QQ Music style).
-    const int outline = qMax(2, fm.height() / 14);
-    p.setPen(m_outline);
-    for (int dx = -outline; dx <= outline; ++dx) {
-        for (int dy = -outline; dy <= outline; ++dy) {
-            if (dx == 0 && dy == 0) {
-                continue;
+    // Alpha 0 (or "none" from settings) means no border.
+    if (m_outline.alpha() > 0) {
+        const int outline = qMax(2, fm.height() / 14);
+        p.setPen(m_outline);
+        for (int dx = -outline; dx <= outline; ++dx) {
+            for (int dy = -outline; dy <= outline; ++dy) {
+                if (dx == 0 && dy == 0) {
+                    continue;
+                }
+                if (dx * dx + dy * dy > outline * outline + 1) {
+                    continue;
+                }
+                p.drawText(area.translated(dx, dy), flags, m_text);
             }
-            if (dx * dx + dy * dy > outline * outline + 1) {
-                continue;
-            }
-            p.drawText(area.translated(dx, dy), flags, m_text);
         }
     }
 
